@@ -1,0 +1,80 @@
+//@version=6
+strategy("RSI 과매도 반등 매수 전략", overlay=true,
+     initial_capital=10000000, currency=currency.KRW,
+     default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+     commission_type=strategy.commission.percent, commission_value=0.165,
+     slippage=0, process_orders_on_close=false)
+
+rsiLength = input.int(14, "RSI 기간", minval=1)
+rsiLevel = input.float(30.0, "RSI 기준선", minval=0.0, maxval=100.0)
+bbLength = input.int(20, "볼린저밴드 기간", minval=1)
+bbMultiplier = input.float(2.0, "표준편차 배수", minval=0.0, step=0.1)
+
+rsi = ta.rsi(close, rsiLength)
+basis = ta.sma(close, bbLength)
+deviation = bbMultiplier * ta.stdev(close, bbLength)
+upper = basis + deviation
+lower = basis - deviation
+atr = ta.atr(14)
+
+rsiCrossUp = ta.crossover(rsi, rsiLevel)
+buySignal = barstate.isconfirmed and rsiCrossUp and close > lower
+
+// 다음 봉 시가 체결 전 마지막으로 확정된 ATR을 고정합니다.
+var float entryAtr = na
+if buySignal and strategy.position_size == 0 and not na(atr)
+    entryAtr := atr
+    strategy.entry("Long", strategy.long)
+
+// 체결가 기준 고정 손절과 ATR 기준 트레일링 스톱을 유지합니다.
+float stopPrice = strategy.position_size > 0 ? strategy.position_avg_price - entryAtr * 2.0 : na
+float trailActivation = strategy.position_size > 0 ? strategy.position_avg_price + entryAtr : na
+
+if strategy.position_size > 0
+    int trailOffsetTicks = math.max(1, int(math.round(entryAtr * 1.5 / syminfo.mintick)))
+    strategy.exit("손절/트레일링", "Long", stop=stopPrice,
+         trail_price=trailActivation, trail_offset=trailOffsetTicks)
+
+    // 진입 봉부터 10개 봉이 완료되면 다음 봉 시가에 시장가 청산합니다.
+    int entryBar = strategy.opentrades.entry_bar_index(0)
+    if bar_index - entryBar >= 9
+        strategy.close("Long", comment="시간 청산")
+
+// 최근 청산 거래의 수익률은 진입가 대비 가격 변동률입니다.
+var table statsTable = table.new(position.top_right, 2, 3, border_width=1)
+
+if barstate.islast
+    int tradeCount = math.min(strategy.closedtrades, 20)
+    int wins = 0
+    float totalReturn = 0.0
+
+    if tradeCount > 0
+        for i = 0 to tradeCount - 1
+            int tradeIndex = strategy.closedtrades - 1 - i
+            float entryPrice = strategy.closedtrades.entry_price(tradeIndex)
+            float exitPrice = strategy.closedtrades.exit_price(tradeIndex)
+            float tradeReturn = (exitPrice / entryPrice - 1.0) * 100.0
+            totalReturn += tradeReturn
+            if strategy.closedtrades.profit(tradeIndex) > 0
+                wins += 1
+
+    string winRateText = tradeCount > 0 ? str.tostring(wins * 100.0 / tradeCount, "#.##") + "%" : "—"
+    string avgReturnText = tradeCount > 0 ? str.tostring(totalReturn / tradeCount, "#.##") + "%" : "—"
+
+    table.cell(statsTable, 0, 0, "최근 청산 거래", text_color=color.white, bgcolor=color.gray)
+    table.cell(statsTable, 1, 0, str.tostring(tradeCount) + "건", text_color=color.white, bgcolor=color.gray)
+    table.cell(statsTable, 0, 1, "승률", text_color=color.white, bgcolor=color.black)
+    table.cell(statsTable, 1, 1, winRateText, text_color=color.white, bgcolor=color.black)
+    table.cell(statsTable, 0, 2, "평균 수익률", text_color=color.white, bgcolor=color.black)
+    table.cell(statsTable, 1, 2, avgReturnText, text_color=color.white, bgcolor=color.black)
+
+plot(upper, "볼린저밴드 상단", color=color.blue)
+plot(basis, "볼린저밴드 중심선", color=color.orange)
+plot(lower, "볼린저밴드 하단", color=color.blue)
+plot(stopPrice, "손절가", color=color.blue, style=plot.style_linebr)
+plot(trailActivation, "트레일링 활성화 가격", color=color.red, style=plot.style_linebr)
+
+plotshape(buySignal, title="매수 신호", style=shape.triangleup,
+     location=location.belowbar, color=color.red, size=size.small)
+
+alertcondition(buySignal, title="RSI 반등 매수", message="RSI 반등 매수 신호가 확정되었습니다.")

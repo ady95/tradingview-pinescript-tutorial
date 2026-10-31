@@ -1,0 +1,25 @@
+//@version=6
+indicator("RSI 과매도 반등 매수 신호", overlay=true)
+
+rsiLength = input.int(14, "RSI 기간", minval=1)
+rsiLevel = input.float(30.0, "RSI 기준선", minval=0.0, maxval=100.0)
+bbLength = input.int(20, "볼린저밴드 기간", minval=2)  // [검토 수정] 1이면 표준편차가 0
+bbMultiplier = input.float(2.0, "표준편차 배수", minval=0.5, step=0.1)  // [검토 수정] 0이면 밴드가 사라짐
+
+rsi = ta.rsi(close, rsiLength)
+basis = ta.sma(close, bbLength)
+deviation = bbMultiplier * ta.stdev(close, bbLength)
+upper = basis + deviation
+lower = basis - deviation
+
+rsiCrossUp = ta.crossover(rsi, rsiLevel)
+buySignal = barstate.isconfirmed and rsiCrossUp and close > lower
+
+plot(upper, "볼린저밴드 상단", color=color.blue)
+plot(basis, "볼린저밴드 중심선", color=color.orange)
+plot(lower, "볼린저밴드 하단", color=color.blue)
+
+plotshape(buySignal, title="매수 신호", style=shape.triangleup, location=location.belowbar, color=color.red, size=size.small)
+
+// [검토 수정] 알림 메시지에 종목과 가격을 넣어 어느 종목의 신호인지 알 수 있게 한다
+alertcondition(buySignal, title="RSI 반등 매수", message="{{ticker}} RSI 반등 매수 신호 (종가 {{close}})")

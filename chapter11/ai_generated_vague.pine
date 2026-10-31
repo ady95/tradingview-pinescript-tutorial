@@ -1,0 +1,30 @@
+//@version=6
+indicator("RSI + 볼린저밴드 매수 신호", overlay = true)
+
+// 설정
+rsiLength = input.int(14, "RSI 기간", minval = 1, group = "RSI")
+rsiOversold = input.float(30.0, "RSI 과매도 기준", minval = 0, maxval = 100, group = "RSI")
+bbLength = input.int(20, "볼린저밴드 기간", minval = 2, group = "볼린저밴드")
+bbMult = input.float(2.0, "표준편차 배수", minval = 0.1, step = 0.1, group = "볼린저밴드")
+showBands = input.bool(true, "볼린저밴드 표시", group = "표시")
+
+// 지표 계산
+rsi = ta.rsi(close, rsiLength)
+basis = ta.sma(close, bbLength)
+deviation = bbMult * ta.stdev(close, bbLength)
+upper = basis + deviation
+lower = basis - deviation
+
+// 종가가 하단 밴드를 다시 돌파하고 RSI가 과매도 상태일 때 매수 신호
+buySignal = barstate.isconfirmed and ta.crossover(close, lower) and rsi < rsiOversold
+
+// 차트 표시
+plot(showBands ? basis : na, "중심선", color = color.orange)
+upperPlot = plot(showBands ? upper : na, "상단 밴드", color = color.blue)
+lowerPlot = plot(showBands ? lower : na, "하단 밴드", color = color.blue)
+fill(upperPlot, lowerPlot, color = showBands ? color.new(color.blue, 90) : na, title = "밴드 영역")
+
+plotshape(buySignal, title = "매수 신호", style = shape.labelup, location = location.belowbar, color = color.green, text = "매수", textcolor = color.white, size = size.small)
+
+// 알림
+alertcondition(buySignal, title = "RSI + 볼린저밴드 매수", message = "{{ticker}} {{interval}}: RSI 과매도 및 볼린저밴드 하단 재돌파 매수 신호")

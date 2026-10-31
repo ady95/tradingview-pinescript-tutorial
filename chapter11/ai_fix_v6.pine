@@ -1,0 +1,29 @@
+//@version=6
+strategy("v5 예제 — 거래량 돌파", overlay = true, initial_capital = 10000000, currency = currency.KRW, default_qty_type = strategy.percent_of_equity, default_qty_value = 100)
+
+len = input.int(15, "기간", minval = 2)
+// sma의 길이는 정수여야 하므로 나눗셈 결과를 정수로 변환합니다.
+half = int(len / 2)
+ma = ta.sma(close, half)
+volAvg = ta.sma(volume, 20)
+
+// v6의 bool은 na를 가질 수 없으므로 false로 초기화합니다.
+// 바로 아래에서 매 봉 값을 덮어쓰므로 매매 결과에는 영향이 없습니다.
+var bool trendOk = false
+trendOk := close > ma
+
+// v6에서는 숫자를 bool로 자동 변환하지 않으므로 0과 비교합니다.
+hasVolume = not na(volume) and volume != 0
+volUp = hasVolume and volume > volAvg * 2
+
+// 교차 함수는 매 봉 계산하고, 제거된 when 대신 if로 주문을 제어합니다.
+crossUp = ta.crossover(close, ma)
+crossDown = ta.crossunder(close, ma)
+
+if crossUp and volUp
+    strategy.entry("L", strategy.long)
+
+if crossDown
+    strategy.close("L")
+
+plot(ma, "이동평균", color = color.orange)
