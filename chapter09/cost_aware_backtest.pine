@@ -1,0 +1,68 @@
+//@version=6
+strategy("09 비용 반영 백테스트", overlay = true, initial_capital = 10000000, currency = currency.KRW, pyramiding = 2, commission_type = strategy.commission.percent, commission_value = 0.165, slippage = 0)
+
+const string GRP_T = "백테스트 기간"
+const string GRP_S = "신호"
+const string GRP_R = "위험 관리"
+startTime = input.time(timestamp("01 Jan 1990 00:00 +0900"), "시작", group = GRP_T)
+endTime = input.time(timestamp("31 Dec 2099 00:00 +0900"), "끝", group = GRP_T)
+atrLen = input.int(10, "ATR 기간", minval = 1, group = GRP_S)
+stMult = input.float(3.0, "추세선 ATR 배수", minval = 0.5, step = 0.5, group = GRP_S)
+trendLen = input.int(200, "추세 필터 EMA", minval = 10, group = GRP_S)
+riskPct = input.float(1.0, "1회 위험 비율(%)", minval = 0.1, step = 0.1, group = GRP_R)
+stopMult = input.float(2.0, "손절 ATR 배수", minval = 0.5, step = 0.5, group = GRP_R)
+
+inRange = time >= startTime and time <= endTime
+
+// 08-4 추세추종 전략 (롱만)
+[stLine, stDir] = ta.supertrend(stMult, atrLen)
+trendEma = ta.ema(close, trendLen)
+atr = ta.atr(atrLen)
+newHigh = ta.crossover(close, ta.highest(high, 20)[1])
+upTrend = stDir < 0
+turnUp = upTrend and not upTrend[1]
+turnDown = not upTrend and upTrend[1]
+
+stopDist = atr * stopMult
+qty = math.max(math.min(math.floor(strategy.equity * riskPct / 100 / stopDist), math.floor(strategy.equity / close)), 1)
+
+var float entryStop = na
+if inRange and turnUp and close > trendEma
+    entryStop := close - stopDist
+    strategy.entry("롱", strategy.long, qty)
+if inRange and strategy.position_size > 0 and strategy.opentrades < 2 and newHigh
+    strategy.entry("롱 추가", strategy.long, qty)
+if strategy.position_size > 0
+    strategy.exit("손절", stop = entryStop)
+    if turnDown or not inRange
+        strategy.close_all(comment = turnDown ? "추세 전환" : "기간 종료")
+
+plot(stLine, "추세선", color = upTrend ? color.red : color.blue, style = plot.style_linebr)
+plot(trendEma, "추세 필터 EMA", color = color.gray, linewidth = 2)
+bgcolor(inRange ? na : color.new(color.gray, 90), title = "기간 밖")
+
+// 핵심 성과 지표 표 (09-3)
+var table stats = table.new(position.top_right, 2, 9, bgcolor = color.new(color.white, 10), border_color = color.gray, border_width = 1)
+row(int r, string name, string value) =>
+    stats.cell(0, r, name, text_color = color.black, text_halign = text.align_left)
+    stats.cell(1, r, value, text_color = color.black, text_halign = text.align_right)
+
+if barstate.islast
+    total = strategy.closedtrades
+    wins = strategy.wintrades
+    losses = strategy.losstrades
+    winRate = total > 0 ? wins * 100.0 / total : 0.0
+    avgWin = wins > 0 ? strategy.grossprofit / wins : 0.0
+    avgLoss = losses > 0 ? strategy.grossloss / losses : 0.0
+    payoff = avgLoss > 0 ? avgWin / avgLoss : 0.0
+    pf = strategy.grossloss > 0 ? strategy.grossprofit / strategy.grossloss : 0.0
+    expectancy = total > 0 ? strategy.netprofit / total : 0.0
+    row(0, "순이익", str.tostring(strategy.netprofit / strategy.initial_capital * 100, "0.00") + "%")
+    row(1, "최대 손실폭", str.tostring(strategy.max_drawdown_percent, "0.00") + "%")
+    row(2, "청산된 거래", str.tostring(total) + "건")
+    row(3, "승률", str.tostring(winRate, "0.0") + "%")
+    row(4, "평균 이익", str.tostring(avgWin, "#,###") + "원")
+    row(5, "평균 손실", str.tostring(avgLoss, "#,###") + "원")
+    row(6, "손익비", str.tostring(payoff, "0.00"))
+    row(7, "수익지수", str.tostring(pf, "0.000"))
+    row(8, "거래당 기대값", str.tostring(expectancy, "#,###") + "원")
