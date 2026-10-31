@@ -1,0 +1,57 @@
+//@version=6
+indicator("06-3 돌파매매와 추세추종", overlay = true)
+
+const string GRP_D = "채널 돌파"
+const string GRP_T = "추세추종"
+chLen = input.int(20, "채널 기간", minval = 2, group = GRP_D)
+bufferAtr = input.float(0.2, "돌파 여유(ATR 배수)", minval = 0, step = 0.1, group = GRP_D)
+failBars = input.int(3, "실패 판단 캔들 수", minval = 1, group = GRP_D)
+atrLen = input.int(10, "ATR 기간", minval = 1, group = GRP_T)
+stMult = input.float(3.0, "ATR 배수", minval = 0.5, step = 0.5, group = GRP_T)
+
+atr = ta.atr(atrLen)
+
+// 1) 돈치안 채널: 직전 chLen개 캔들의 최고가·최저가 ([1]로 현재 캔들 제외)
+upper = ta.highest(high, chLen)[1]
+lower = ta.lowest(low, chLen)[1]
+
+// 2) 추세추종선(Supertrend 원리) 직접 구현
+upBand = hl2 - stMult * atr
+dnBand = hl2 + stMult * atr
+var float longStop = na
+var float shortStop = na
+var int dir = 1
+prevLong = nz(longStop, upBand)
+prevShort = nz(shortStop, dnBand)
+// 상승 중에는 지지선을 올리기만 하고, 하락 중에는 저항선을 내리기만 한다
+longStop := close[1] > prevLong ? math.max(upBand, prevLong) : upBand
+shortStop := close[1] < prevShort ? math.min(dnBand, prevShort) : dnBand
+dir := dir == -1 and close > prevShort ? 1 : dir == 1 and close < prevLong ? -1 : dir
+trendLine = dir == 1 ? longStop : shortStop
+
+// 내장 함수 ta.supertrend()와 비교 (내장 함수의 방향은 음수가 상승)
+[stLine, stDir] = ta.supertrend(stMult, atrLen)
+plot(trendLine - stLine, "추세선 차이", display = display.data_window)
+
+// 3) 돌파 신호: 채널 상단 + ATR 여유를 넘고, 추세가 상승일 때만
+breakout = ta.crossover(close, upper + atr * bufferAtr) and dir == 1 and barstate.isconfirmed
+
+// 4) 돌파 실패: 돌파 후 failBars개 캔들 안에 종가가 돌파 기준선 아래로 돌아옴
+var float breakLevel = na
+var int breakBar = na
+failed = not na(breakLevel) and close < breakLevel and bar_index - breakBar <= failBars and barstate.isconfirmed
+if failed or (not na(breakBar) and bar_index - breakBar > failBars)
+    breakLevel := na
+    breakBar := na
+if breakout
+    breakLevel := upper
+    breakBar := bar_index
+
+plot(upper, "채널 상단", color = color.new(color.red, 40), style = plot.style_stepline)
+plot(lower, "채널 하단", color = color.new(color.blue, 40), style = plot.style_stepline)
+plot(trendLine, "추세추종선", color = dir == 1 ? color.red : color.blue, linewidth = 2, style = plot.style_linebr)
+
+plotshape(breakout, "돌파", shape.labelup, location.belowbar, color.red, text = "돌파", textcolor = color.white, size = size.small)
+plotshape(failed, "돌파 실패", shape.xcross, location.abovebar, color.gray, size = size.small)
+plotshape(dir == 1 and dir[1] == -1, "상승 전환", shape.triangleup, location.belowbar, color.red, size = size.tiny)
+plotshape(dir == -1 and dir[1] == 1, "하락 전환", shape.triangledown, location.abovebar, color.blue, size = size.tiny)

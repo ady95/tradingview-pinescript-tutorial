@@ -1,0 +1,37 @@
+//@version=6
+indicator("06-2 일봉과 분봉 결합", overlay = true, max_labels_count = 100)
+
+dEmaLen = input.int(20, "일봉 EMA 기간", minval = 1)
+useDailyFilter = input.bool(true, "일봉 추세 필터 사용")
+
+isNewDay = timeframe.change("D")
+
+// 전일 고가·저가·종가와 전일 기준 일봉 EMA를 한 번의 요청으로 가져온다
+[pdHigh, pdLow, pdClose, dEma] = request.security(syminfo.tickerid, "D", [high[1], low[1], close[1], ta.ema(close, dEmaLen)[1]], lookahead = barmerge.lookahead_on)
+
+// 일봉 추세: 전일 종가가 일봉 EMA 위면 상승 추세로 본다
+dailyUp = pdClose > dEma
+
+// 분봉 신호: 세션 VWAP 회복 (05-3)
+sessVwap = ta.vwap(hlc3)
+reclaim = ta.crossover(close, sessVwap) and not isNewDay and barstate.isconfirmed
+longSignal = reclaim and (not useDailyFilter or dailyUp)
+filteredOut = reclaim and not longSignal
+
+// 전일 고가 돌파: 분봉 종가가 전일 고가를 넘어서는 순간
+pdHighBreak = ta.crossover(close, pdHigh) and not isNewDay and barstate.isconfirmed
+
+// 장 시작 갭: 오늘 시가와 전일 종가의 차이를 첫 캔들에 표시
+if isNewDay and not na(pdClose)
+    gapPct = (open - pdClose) / pdClose * 100
+    label.new(bar_index, high, "갭 " + (gapPct >= 0 ? "+" : "") + str.tostring(gapPct, "0.00") + "%", style = label.style_label_down, color = gapPct >= 0 ? color.red : color.blue, textcolor = color.white, size = size.small)
+
+plot(isNewDay ? na : pdHigh, "전일 고가", color = color.red, style = plot.style_linebr)
+plot(isNewDay ? na : pdLow, "전일 저가", color = color.blue, style = plot.style_linebr)
+plot(isNewDay ? na : pdClose, "전일 종가", color = color.gray, style = plot.style_linebr)
+plot(isNewDay ? na : sessVwap, "VWAP", color = color.orange, linewidth = 2, style = plot.style_linebr)
+bgcolor(dailyUp ? color.new(color.red, 95) : color.new(color.blue, 95), title = "일봉 추세")
+
+plotshape(longSignal, "매수 신호", shape.labelup, location.belowbar, color.red, text = "매수", textcolor = color.white, size = size.small)
+plotshape(filteredOut, "일봉 추세로 걸러진 신호", shape.xcross, location.belowbar, color.gray, size = size.tiny)
+plotshape(pdHighBreak, "전일 고가 돌파", shape.triangleup, location.abovebar, color.red, size = size.tiny)

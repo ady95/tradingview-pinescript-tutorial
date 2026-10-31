@@ -1,0 +1,30 @@
+//@version=6
+indicator("06-1 request.security 기초", overlay = true)
+
+tf = input.timeframe("D", "상위 시간대")
+emaLen = input.int(20, "상위 시간대 EMA 기간", minval = 1)
+compareSym = input.symbol("KRX:KOSPI", "비교 종목")
+
+// 상위 시간대는 차트 주기보다 길어야 한다
+if timeframe.in_seconds(tf) < timeframe.in_seconds()
+    runtime.error("상위 시간대는 차트 주기보다 길어야 합니다.")
+
+// 1) 상위 시간대 EMA: 확정된 직전 상위 캔들의 값만 가져온다 (이유는 06-4)
+htfEma = request.security(syminfo.tickerid, tf, ta.ema(close, emaLen)[1], lookahead = barmerge.lookahead_on)
+
+// 2) gaps 옵션: gaps_on이면 상위 캔들 값이 새로 들어온 캔들에만 값이 있고 나머지는 na
+htfCloseGaps = request.security(syminfo.tickerid, tf, close[1], gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)
+
+// 3) 다른 종목의 데이터: 비교 종목의 같은 주기 종가
+otherClose = request.security(compareSym, timeframe.period, close)
+
+// 상대 강도: (이 종목 ÷ 비교 종목)을 첫 값 기준 100으로 맞춘 비율
+var float baseRatio = na
+ratio = close / otherClose
+if na(baseRatio) and not na(ratio)
+    baseRatio := ratio
+relStrength = ratio / baseRatio * 100
+
+plot(htfEma, "상위 시간대 EMA", color = color.purple, linewidth = 2, style = plot.style_stepline)
+plotshape(not na(htfCloseGaps), "상위 캔들 갱신", shape.circle, location.top, color.gray, size = size.tiny)
+plot(relStrength, "상대 강도", display = display.data_window)
