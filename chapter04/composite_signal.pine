@@ -1,0 +1,57 @@
+//@version=6
+indicator("04-4 복합 신호", overlay = true)
+
+const string GRP_F = "필터"
+useTrend = input.bool(true, "추세: 종가가 EMA 200 위", group = GRP_F)
+useMomentum = input.bool(true, "모멘텀: RSI 50 위", group = GRP_F)
+useVolatility = input.bool(true, "변동성: ATR% 상한 이하", group = GRP_F)
+useVolume = input.bool(true, "거래량: 20일 평균 대비 배수 이상", group = GRP_F)
+maxAtrPct = input.float(4.0, "ATR% 상한", minval = 0.1, step = 0.1, group = GRP_F)
+volMult = input.float(1.2, "거래량 배수", minval = 0.1, step = 0.1, group = GRP_F)
+
+// 지표 계산은 모두 전역에서 매 캔들 수행한다
+ema20 = ta.ema(close, 20)
+ema60 = ta.ema(close, 60)
+ema200 = ta.ema(close, 200)
+rsi = ta.rsi(close, 14)
+atrPct = ta.atr(14) / close * 100
+volRatio = volume / ta.sma(volume, 20)
+
+// 기본 신호: EMA 20/60 골든크로스
+baseSignal = ta.crossover(ema20, ema60) and barstate.isconfirmed
+
+// 필터를 끄면 항상 통과(true)한다
+trendOk = not useTrend or close > ema200
+momentumOk = not useMomentum or rsi > 50
+volatilityOk = not useVolatility or atrPct <= maxAtrPct
+volumeOk = not useVolume or volRatio >= volMult
+
+finalSignal = baseSignal and trendOk and momentumOk and volatilityOk and volumeOk
+filteredOut = baseSignal and not finalSignal
+
+// 신호 개수 세기: 필터가 신호를 얼마나 걸러 냈는지 확인
+var int baseCount = 0
+var int finalCount = 0
+if baseSignal
+    baseCount += 1
+if finalSignal
+    finalCount += 1
+
+plot(ema20, "EMA 20", color = color.orange)
+plot(ema60, "EMA 60", color = color.purple)
+plot(ema200, "EMA 200", color = color.gray, linewidth = 2)
+
+plotshape(finalSignal, "최종 매수 신호", shape.labelup, location.belowbar, color.red, text = "매수", textcolor = color.white, size = size.small)
+plotshape(filteredOut, "걸러진 신호", shape.xcross, location.belowbar, color.gray, size = size.tiny)
+alertcondition(finalSignal, "복합 매수 신호", "모든 필터를 통과한 매수 신호입니다")
+
+// 신호 통계 표
+var table stats = table.new(position.top_right, 2, 3, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
+if barstate.islast
+    passRate = baseCount > 0 ? finalCount * 100.0 / baseCount : 0.0
+    stats.cell(0, 0, "기본 신호", text_color = color.white)
+    stats.cell(1, 0, str.tostring(baseCount), text_color = color.white)
+    stats.cell(0, 1, "최종 신호", text_color = color.white)
+    stats.cell(1, 1, str.tostring(finalCount), text_color = color.red)
+    stats.cell(0, 2, "통과율", text_color = color.white)
+    stats.cell(1, 2, str.tostring(passRate, "0.0") + "%", text_color = color.white)

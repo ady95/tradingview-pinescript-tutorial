@@ -1,0 +1,29 @@
+//@version=6
+indicator("04-2 MACD 신호", overlay = false)
+
+fastLen = input.int(12, "단기 EMA", minval = 1)
+slowLen = input.int(26, "장기 EMA", minval = 2)
+sigLen = input.int(9, "시그널 기간", minval = 1)
+
+// MACD = 단기 EMA - 장기 EMA, 시그널 = MACD의 EMA, 히스토그램 = 둘의 차이
+macdLine = ta.ema(close, fastLen) - ta.ema(close, slowLen)
+signalLine = ta.ema(macdLine, sigLen)
+hist = macdLine - signalLine
+
+// 내장 함수 ta.macd()와 비교 (튜플로 세 값을 한 번에 받는다)
+[bMacd, bSignal, bHist] = ta.macd(close, fastLen, slowLen, sigLen)
+plot(hist - bHist, "히스토그램 차이", display = display.data_window)
+
+// 히스토그램 색: 0 위는 빨강, 아래는 파랑, 힘이 약해지면 연하게
+histColor = hist >= 0 ? (hist > hist[1] ? color.red : color.new(color.red, 60)) : (hist < hist[1] ? color.blue : color.new(color.blue, 60))
+plot(hist, "히스토그램", color = histColor, style = plot.style_columns)
+plot(macdLine, "MACD", color = color.orange, linewidth = 2)
+plot(signalLine, "시그널", color = color.gray)
+hline(0, "0선", color = color.gray, linestyle = hline.style_dotted)
+
+// 0선 아래에서의 상향 교차만 매수, 0선 위에서의 하향 교차만 매도로 본다
+buySignal = ta.crossover(macdLine, signalLine) and macdLine < 0 and barstate.isconfirmed
+sellSignal = ta.crossunder(macdLine, signalLine) and macdLine > 0 and barstate.isconfirmed
+
+plotshape(buySignal ? macdLine : na, "매수 교차", shape.circle, location.absolute, color.red, size = size.tiny)
+plotshape(sellSignal ? macdLine : na, "매도 교차", shape.circle, location.absolute, color.blue, size = size.tiny)

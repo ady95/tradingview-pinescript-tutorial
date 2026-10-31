@@ -1,0 +1,41 @@
+//@version=6
+indicator("04-1 SMA·EMA 직접 구현과 골든크로스", overlay = true)
+
+fastLen = input.int(20, "단기 기간", minval = 1)
+slowLen = input.int(60, "장기 기간", minval = 2)
+
+// 단순 이동평균: 최근 len개 값의 합 ÷ len
+mySma(float src, int len) =>
+    float total = 0.0
+    for i = 0 to len - 1
+        total += src[i]
+    total / len
+
+// 지수 이동평균: 이번 값에 alpha만큼, 직전 평균에 (1 - alpha)만큼 비중을 준다
+myEma(float src, int len) =>
+    float alpha = 2.0 / (len + 1)
+    var float ema = na
+    ema := na(ema) ? src : alpha * src + (1 - alpha) * ema
+    ema
+
+smaFast = mySma(close, fastLen)
+smaSlow = mySma(close, slowLen)
+emaFast = myEma(close, fastLen)
+
+// 내장 함수와의 차이: 0에 가까우면 직접 구현이 맞다 (데이터 창에서 확인)
+plot(smaFast - ta.sma(close, fastLen), "SMA 차이", display = display.data_window)
+plot(emaFast - ta.ema(close, fastLen), "EMA 차이", display = display.data_window)
+
+plot(smaFast, "SMA 단기", color = color.orange, linewidth = 2)
+plot(smaSlow, "SMA 장기", color = color.purple, linewidth = 2)
+plot(emaFast, "EMA 단기", color = color.gray)
+
+// 골든크로스·데드크로스 (확정봉 기준)
+goldenCross = ta.crossover(smaFast, smaSlow) and barstate.isconfirmed
+deadCross = ta.crossunder(smaFast, smaSlow) and barstate.isconfirmed
+
+plotshape(goldenCross, "골든크로스", shape.labelup, location.belowbar, color.red, text = "GC", textcolor = color.white, size = size.small)
+plotshape(deadCross, "데드크로스", shape.labeldown, location.abovebar, color.blue, text = "DC", textcolor = color.white, size = size.small)
+
+alertcondition(goldenCross, "골든크로스", "단기 SMA가 장기 SMA를 상향 돌파했습니다")
+alertcondition(deadCross, "데드크로스", "단기 SMA가 장기 SMA를 하향 돌파했습니다")

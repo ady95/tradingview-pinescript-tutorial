@@ -1,0 +1,41 @@
+//@version=6
+indicator("04-3 볼린저밴드와 ATR", overlay = true)
+
+const string GRP_BB = "볼린저밴드"
+const string GRP_ATR = "ATR"
+
+bbLen = input.int(20, "기간", minval = 2, group = GRP_BB)
+bbMult = input.float(2.0, "표준편차 배수", minval = 0.5, step = 0.5, group = GRP_BB)
+squeezeLookback = input.int(120, "수축 판단 기간", minval = 10, group = GRP_BB)
+atrLen = input.int(14, "기간", minval = 1, group = GRP_ATR)
+atrMult = input.float(2.0, "손절 거리 배수", minval = 0.5, step = 0.5, group = GRP_ATR)
+
+// 볼린저밴드: 중심선 ± 표준편차 × 배수
+basis = ta.sma(close, bbLen)
+dev = bbMult * ta.stdev(close, bbLen)
+upper = basis + dev
+lower = basis - dev
+
+// 밴드 폭(%): 중심선 대비 위아래 밴드 간격
+bandwidth = (upper - lower) / basis * 100
+isSqueeze = bandwidth <= ta.lowest(bandwidth, squeezeLookback)
+
+// ATR 직접 구현: 진폭(True Range)의 RMA 평균
+prevClose = nz(close[1], close)
+trueRange = math.max(high - low, math.abs(high - prevClose), math.abs(low - prevClose))
+myAtr = ta.rma(trueRange, atrLen)
+plot(myAtr - ta.atr(atrLen), "ATR 차이", display = display.data_window)
+
+// 지금 매수한다면 손절가는 어디인가: 종가 - ATR × 배수
+stopPrice = close - myAtr * atrMult
+stopPct = (close - stopPrice) / close * 100
+
+pBasis = plot(basis, "중심선", color = color.gray)
+pUpper = plot(upper, "상단", color = color.red)
+pLower = plot(lower, "하단", color = color.blue)
+fill(pUpper, pLower, color = color.new(color.gray, 90), title = "밴드 영역")
+bgcolor(isSqueeze ? color.new(color.yellow, 85) : na, title = "수축 구간")
+
+plot(stopPrice, "ATR 손절가", color = color.new(color.blue, 30), style = plot.style_circles)
+plot(bandwidth, "밴드 폭(%)", display = display.data_window)
+plot(stopPct, "손절 거리(%)", display = display.data_window)
