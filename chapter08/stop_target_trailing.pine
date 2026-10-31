@@ -1,0 +1,35 @@
+//@version=6
+strategy("08-3 손절·익절·트레일링", overlay = true, initial_capital = 10000000, currency = currency.KRW, default_qty_type = strategy.percent_of_equity, default_qty_value = 100)
+
+exitMode = input.string("ATR 손절·익절", "청산 방식", options = ["ATR 손절·익절", "트레일링 스톱"])
+atrLen = input.int(14, "ATR 기간", minval = 1)
+stopMult = input.float(2.0, "손절 ATR 배수", minval = 0.5, step = 0.5)
+targetMult = input.float(3.0, "익절 ATR 배수", minval = 0.5, step = 0.5)
+trailMult = input.float(3.0, "트레일링 ATR 배수", minval = 0.5, step = 0.5)
+
+fast = ta.ema(close, 20)
+slow = ta.ema(close, 60)
+atr = ta.atr(atrLen)
+plot(fast, "EMA 20", color = color.orange)
+plot(slow, "EMA 60", color = color.purple)
+
+// 진입 시점의 ATR을 기억해 두고, 포지션이 끝날 때까지 같은 값으로 손절·익절을 계산한다
+var float entryAtr = na
+if ta.crossover(fast, slow) and strategy.position_size == 0
+    entryAtr := atr
+    strategy.entry("매수", strategy.long)
+
+inPosition = strategy.position_size > 0
+stopPrice = inPosition ? strategy.position_avg_price - entryAtr * stopMult : na
+targetPrice = inPosition ? strategy.position_avg_price + entryAtr * targetMult : na
+
+if inPosition
+    if exitMode == "ATR 손절·익절"
+        strategy.exit("청산", "매수", stop = stopPrice, limit = targetPrice)
+    else
+        // 트레일링: 진입가에서 바로 작동하고, 최고가에서 ATR × 배수만큼 내려오면 청산
+        trailTicks = math.round(entryAtr * trailMult / syminfo.mintick)
+        strategy.exit("청산", "매수", stop = stopPrice, trail_price = strategy.position_avg_price, trail_offset = trailTicks)
+
+plot(stopPrice, "손절가", color = color.blue, style = plot.style_linebr)
+plot(exitMode == "ATR 손절·익절" ? targetPrice : na, "익절가", color = color.red, style = plot.style_linebr)

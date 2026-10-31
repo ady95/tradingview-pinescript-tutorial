@@ -1,0 +1,55 @@
+//@version=6
+strategy("08-4 추세추종 전략", overlay = true, initial_capital = 10000000, currency = currency.KRW, pyramiding = 2)
+
+const string GRP_S = "신호"
+const string GRP_R = "위험 관리"
+direction = input.string("롱만", "거래 방향", options = ["롱만", "양방향"], group = GRP_S)
+atrLen = input.int(10, "ATR 기간", minval = 1, group = GRP_S)
+stMult = input.float(3.0, "추세선 ATR 배수", minval = 0.5, step = 0.5, group = GRP_S)
+trendLen = input.int(200, "추세 필터 EMA", minval = 10, group = GRP_S)
+riskPct = input.float(1.0, "1회 위험 비율(%)", minval = 0.1, step = 0.1, group = GRP_R)
+stopMult = input.float(2.0, "손절 ATR 배수", minval = 0.5, step = 0.5, group = GRP_R)
+usePyramid = input.bool(true, "추가 매수(피라미딩)", group = GRP_R)
+
+// 지표 계산은 모두 전역에서 매 캔들 수행한다
+[stLine, stDir] = ta.supertrend(stMult, atrLen)
+trendEma = ta.ema(close, trendLen)
+atr = ta.atr(atrLen)
+newHigh = ta.crossover(close, ta.highest(high, 20)[1])
+
+upTrend = stDir < 0  // ta.supertrend의 방향은 음수가 상승
+turnUp = upTrend and not upTrend[1]
+turnDown = not upTrend and upTrend[1]
+
+longSignal = turnUp and close > trendEma
+shortSignal = turnDown and close < trendEma and direction == "양방향"
+addSignal = usePyramid and strategy.position_size > 0 and strategy.opentrades < 2 and newHigh
+
+// 위험 기반 수량: 손절되면 자본의 riskPct%만 잃도록 주식 수를 정한다
+stopDist = atr * stopMult
+riskQty = math.floor(strategy.equity * riskPct / 100 / stopDist)
+maxQty = math.floor(strategy.equity / close)
+qty = math.max(math.min(riskQty, maxQty), 1)
+
+var float entryStop = na
+if longSignal
+    entryStop := close - stopDist
+    strategy.entry("롱", strategy.long, qty)
+if addSignal
+    strategy.entry("롱 추가", strategy.long, qty)
+if shortSignal
+    entryStop := close + stopDist
+    strategy.entry("숏", strategy.short, qty)
+
+// 손절: 진입 때 정한 가격 / 추세 전환: 추세선 방향이 바뀌면 전부 청산
+if strategy.position_size > 0
+    strategy.exit("롱 손절", stop = entryStop)
+    if turnDown
+        strategy.close_all(comment = "추세 전환")
+if strategy.position_size < 0
+    strategy.exit("숏 손절", stop = entryStop)
+    if turnUp
+        strategy.close_all(comment = "추세 전환")
+
+plot(stLine, "추세선", color = upTrend ? color.red : color.blue, style = plot.style_linebr)
+plot(trendEma, "추세 필터 EMA", color = color.gray, linewidth = 2)

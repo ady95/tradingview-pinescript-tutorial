@@ -1,0 +1,20 @@
+//@version=6
+strategy("08-1 EMA 교차 전략", overlay = true, initial_capital = 10000000, currency = currency.KRW, default_qty_type = strategy.percent_of_equity, default_qty_value = 100)
+
+fastLen = input.int(20, "단기 EMA", minval = 1)
+slowLen = input.int(60, "장기 EMA", minval = 2)
+
+fast = ta.ema(close, fastLen)
+slow = ta.ema(close, slowLen)
+plot(fast, "단기 EMA", color = color.orange)
+plot(slow, "장기 EMA", color = color.purple)
+
+// 지표에서 쓰던 신호 조건을 그대로 가져온다 (04-4의 기본 신호)
+buySignal = ta.crossover(fast, slow)
+sellSignal = ta.crossunder(fast, slow)
+
+// 신호가 난 캔들이 마감될 때 주문을 내고, 다음 캔들 시가에 체결된다
+if buySignal
+    strategy.entry("매수", strategy.long)
+if sellSignal
+    strategy.close("매수", comment = "청산")

@@ -1,0 +1,33 @@
+//@version=6
+strategy("08-2 주문 유형", overlay = true, initial_capital = 10000000, currency = currency.KRW)
+
+orderType = input.string("시장가", "진입 주문 유형", options = ["시장가", "지정가", "역지정가"])
+qty = input.int(10, "주문 수량(주)", minval = 1)
+emaLen = input.int(20, "EMA 기간", minval = 1)
+cancelBars = input.int(5, "미체결 주문 취소(캔들)", minval = 1)
+
+ema = ta.ema(close, emaLen)
+trendEma = ta.ema(close, 60)
+plot(ema, "EMA", color = color.orange)
+plot(trendEma, "추세 EMA", color = color.gray)
+
+// 진입 준비 신호: 상승 추세에서 종가가 EMA를 다시 넘어섬
+setup = ta.crossover(close, ema) and close > trendEma
+barsSinceSetup = ta.barssince(setup)
+
+if setup and strategy.position_size == 0
+    switch orderType
+        // 시장가: 다음 캔들 시가에 바로 체결
+        "시장가" => strategy.entry("매수", strategy.long, qty)
+        // 지정가: 가격이 EMA까지 내려오면 그 가격 이하에서 체결
+        "지정가" => strategy.entry("매수", strategy.long, qty, limit = ema)
+        // 역지정가: 신호 캔들의 고가를 넘어서면 그 가격 이상에서 체결
+        "역지정가" => strategy.entry("매수", strategy.long, qty, stop = high + syminfo.mintick)
+
+// 정해진 캔들 수 안에 체결되지 않은 주문은 취소한다
+if barsSinceSetup == cancelBars and strategy.position_size == 0
+    strategy.cancel("매수")
+
+// 청산: 종가가 EMA 아래로 내려가면 다음 캔들 시가에 시장가 청산
+if close < ema
+    strategy.close("매수", comment = "EMA 이탈")
