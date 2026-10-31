@@ -1,0 +1,20 @@
+//@version=6
+indicator("03-1 이동평균선 리본", overlay = true)
+
+ma5 = ta.ema(close, 5)
+ma20 = ta.ema(close, 20)
+ma60 = ta.ema(close, 60)
+
+// plot()은 선을 그리고, 그 선을 가리키는 값을 돌려준다 (fill에서 사용)
+p5 = plot(ma5, "EMA 5", color = color.red, linewidth = 1)
+p20 = plot(ma20, "EMA 20", color = color.orange, linewidth = 2)
+p60 = plot(ma60, "EMA 60", color = color.blue, linewidth = 2, style = plot.style_stepline)
+
+// 정배열: 단기 > 중기 > 장기
+isBull = ma5 > ma20 and ma20 > ma60
+
+// 두 선 사이 영역 채우기 (color.new의 두 번째 인수는 투명도 0~100)
+fill(p20, p60, color = isBull ? color.new(color.red, 80) : color.new(color.blue, 85), title = "EMA 20-60 영역")
+
+// 정배열이 시작된 캔들의 배경 칠하기
+bgcolor(isBull and not isBull[1] ? color.new(color.red, 85) : na, title = "정배열 시작")

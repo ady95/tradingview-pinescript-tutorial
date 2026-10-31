@@ -1,0 +1,25 @@
+//@version=6
+indicator("03-2 매수·매도 신호 라벨", overlay = true, max_labels_count = 100)
+
+fast = ta.ema(close, 9)
+slow = ta.ema(close, 21)
+plot(fast, "EMA 9", color = color.red)
+plot(slow, "EMA 21", color = color.blue)
+
+// 확정봉 기준 교차 신호 (02-4)
+buySignal = ta.crossover(fast, slow) and barstate.isconfirmed
+sellSignal = ta.crossunder(fast, slow) and barstate.isconfirmed
+
+// 방법 1) plotshape: 간단한 도형 표시
+plotshape(buySignal, "매수 도형", shape.triangleup, location.belowbar, color.red, size = size.small)
+plotshape(sellSignal, "매도 도형", shape.triangledown, location.abovebar, color.blue, size = size.small)
+
+// 방법 2) label.new: 신호 가격이 들어간 라벨
+if buySignal
+    label.new(bar_index, low, "매수\n" + str.tostring(close, format.mintick), style = label.style_label_up, color = color.red, textcolor = color.white, size = size.small)
+if sellSignal
+    label.new(bar_index, high, "매도\n" + str.tostring(close, format.mintick), style = label.style_label_down, color = color.blue, textcolor = color.white, size = size.small)
+
+// 알림 조건 등록 (12장에서 활용)
+alertcondition(buySignal, "매수 신호", "EMA 9가 EMA 21을 상향 돌파했습니다")
+alertcondition(sellSignal, "매도 신호", "EMA 9가 EMA 21을 하향 돌파했습니다")

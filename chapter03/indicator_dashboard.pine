@@ -1,0 +1,34 @@
+//@version=6
+indicator("03-4 지표 대시보드", overlay = true)
+
+rsiLen = input.int(14, "RSI 기간", minval = 2)
+posInput = input.string("오른쪽 위", "표 위치", options = ["오른쪽 위", "오른쪽 아래", "왼쪽 위"])
+
+// 계산은 매 캔들 수행한다 (02-2: ta 함수는 매 캔들 호출)
+chg = (close - close[1]) / close[1] * 100
+rsi = ta.rsi(close, rsiLen)
+ema20 = ta.ema(close, 20)
+ema60 = ta.ema(close, 60)
+volRatio = volume / ta.sma(volume, 20)
+
+pos = switch posInput
+    "오른쪽 아래" => position.bottom_right
+    "왼쪽 위" => position.top_left
+    => position.top_right
+
+// 표는 한 번만 만들어 두고(var) 내용만 갱신한다
+var table dash = table.new(pos, 2, 6, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
+
+// 한 행(항목 이름 + 값)을 채우는 함수
+fillRow(table t, int row, string name, string value, color valueColor) =>
+    t.cell(0, row, name, text_color = color.white, text_halign = text.align_left)
+    t.cell(1, row, value, text_color = valueColor, text_halign = text.align_right)
+
+// 표는 마지막 캔들에서만 채운다 — 과거 캔들마다 그릴 필요가 없다
+if barstate.islast
+    fillRow(dash, 0, "종목", syminfo.ticker, color.white)
+    fillRow(dash, 1, "종가", str.tostring(close, format.mintick), color.white)
+    fillRow(dash, 2, "등락률", str.tostring(chg, "0.00") + "%", chg >= 0 ? color.red : color.blue)
+    fillRow(dash, 3, "RSI(" + str.tostring(rsiLen) + ")", str.tostring(rsi, "0.0"), rsi > 70 ? color.red : rsi < 30 ? color.blue : color.white)
+    fillRow(dash, 4, "추세(EMA 20/60)", ema20 > ema60 ? "상승" : "하락", ema20 > ema60 ? color.red : color.blue)
+    fillRow(dash, 5, "거래량(20일 평균 대비)", str.tostring(volRatio, "0.00") + "배", volRatio >= 2 ? color.orange : color.white)

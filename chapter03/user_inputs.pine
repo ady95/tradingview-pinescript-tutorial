@@ -1,0 +1,38 @@
+//@version=6
+indicator("03-3 입력 옵션", overlay = true, max_labels_count = 100)
+
+// 그룹 이름을 상수로 만들어 두면 오타를 막을 수 있다
+const string GRP_MA = "이동평균 설정"
+const string GRP_VIEW = "표시 설정"
+
+src = input.source(close, "가격 소스", group = GRP_MA)
+maType = input.string("EMA", "이동평균 종류", options = ["SMA", "EMA"], group = GRP_MA)
+fastLen = input.int(9, "단기", minval = 1, group = GRP_MA, inline = "len")
+slowLen = input.int(21, "장기", minval = 2, group = GRP_MA, inline = "len", tooltip = "장기 기간은 단기 기간보다 커야 합니다.")
+
+showLabels = input.bool(true, "신호 라벨 표시", group = GRP_VIEW)
+buyColor = input.color(color.red, "매수", group = GRP_VIEW, inline = "color")
+sellColor = input.color(color.blue, "매도", group = GRP_VIEW, inline = "color")
+
+// 입력값 검증: 잘못된 조합이면 실행을 멈추고 이유를 보여 준다
+if fastLen >= slowLen
+    runtime.error("단기 기간은 장기 기간보다 작아야 합니다.")
+
+// ta 함수는 매 캔들 모두 계산해 두고, 결과만 골라 쓴다 (02-2)
+fastSma = ta.sma(src, fastLen)
+fastEma = ta.ema(src, fastLen)
+slowSma = ta.sma(src, slowLen)
+slowEma = ta.ema(src, slowLen)
+fastMa = maType == "SMA" ? fastSma : fastEma
+slowMa = maType == "SMA" ? slowSma : slowEma
+
+plot(fastMa, "단기 이동평균", color = buyColor)
+plot(slowMa, "장기 이동평균", color = sellColor)
+
+buySignal = ta.crossover(fastMa, slowMa) and barstate.isconfirmed
+sellSignal = ta.crossunder(fastMa, slowMa) and barstate.isconfirmed
+
+if showLabels and buySignal
+    label.new(bar_index, low, "매수", style = label.style_label_up, color = buyColor, textcolor = color.white, size = size.small)
+if showLabels and sellSignal
+    label.new(bar_index, high, "매도", style = label.style_label_down, color = sellColor, textcolor = color.white, size = size.small)
