@@ -1,0 +1,11 @@
+//@version=6
+indicator("유형 비교 — Indicator", overlay = true)
+
+fast = ta.sma(close, 5)
+slow = ta.sma(close, 20)
+
+plot(fast, "SMA 5", color = color.teal)
+plot(slow, "SMA 20", color = color.orange)
+
+// 지표는 신호를 "표시"만 한다
+plotshape(ta.crossover(fast, slow), "골든크로스", shape.triangleup, location.belowbar, color.green)

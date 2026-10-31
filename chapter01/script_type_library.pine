@@ -1,0 +1,10 @@
+//@version=6
+// @description 여러 스크립트에서 함께 쓸 함수를 모아 두는 라이브러리 예시
+library("MyFirstLibrary")
+
+// @function 두 이동평균의 간격을 백분율로 돌려준다
+// @param fast 단기 이동평균
+// @param slow 장기 이동평균
+// @returns (fast - slow) / slow * 100
+export spreadPercent(float fast, float slow) =>
+    (fast - slow) / slow * 100

@@ -4,3 +4,8 @@
 
 | 파일 | 본문 절 | 설명 |
 |---|---|---|
+| first_indicator.pine | 01-2 | 첫 번째 지표 — 20일 단순 이동평균선 |
+| script_type_indicator.pine | 01-3 | Indicator 유형 — 이동평균 교차를 표시 |
+| script_type_strategy.pine | 01-3 | Strategy 유형 — 같은 교차로 가상 주문 |
+| script_type_library.pine | 01-3 | Library 유형 — 공용 함수 내보내기 |
+| v6_changes.pine | 01-4 | v6에서 달라진 동작 확인 |

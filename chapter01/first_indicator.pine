@@ -1,0 +1,11 @@
+//@version=6
+indicator("나의 첫 번째 지표", overlay = true)
+
+// 설정 창에서 바꿀 수 있는 이동평균 기간
+length = input.int(20, "이동평균 기간", minval = 1)
+
+// 종가(close)의 단순 이동평균 계산
+ma = ta.sma(close, length)
+
+// 계산 결과를 가격 차트 위에 선으로 그리기
+plot(ma, "SMA", color = color.orange, linewidth = 2)
