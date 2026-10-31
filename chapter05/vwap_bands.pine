@@ -1,0 +1,68 @@
+//@version=6
+indicator("05-2 VWAP 밴드와 이탈 감지", overlay = true)
+
+mult1 = input.float(1.0, "밴드 1 배수", minval = 0.1, step = 0.1)
+mult2 = input.float(2.0, "밴드 2 배수", minval = 0.1, step = 0.1)
+
+isNewDay = timeframe.change("D")
+src = hlc3
+vol = nz(volume)
+
+// 가격, 거래량, 가격 제곱의 거래량 가중 합계를 하루 단위로 누적
+var float sumPV = 0.0
+var float sumV = 0.0
+var float sumPPV = 0.0
+if isNewDay
+    sumPV := 0.0
+    sumV := 0.0
+    sumPPV := 0.0
+sumPV += src * vol
+sumV += vol
+sumPPV += src * src * vol
+
+vwapVal = sumV > 0 ? sumPV / sumV : na
+// 거래량 가중 분산 = (가격 제곱의 가중 평균) - (가중 평균의 제곱)
+variance = sumV > 0 ? sumPPV / sumV - vwapVal * vwapVal : na
+stdev = math.sqrt(math.max(variance, 0))
+
+upper1 = vwapVal + stdev * mult1
+lower1 = vwapVal - stdev * mult1
+upper2 = vwapVal + stdev * mult2
+lower2 = vwapVal - stdev * mult2
+
+// 내장 함수 ta.vwap()의 밴드와 비교
+[tvVwap, tvUpper, tvLower] = ta.vwap(src, isNewDay, mult1)
+plot(upper1 - tvUpper, "밴드 1 상단 차이", display = display.data_window)
+
+plot(isNewDay ? na : vwapVal, "VWAP", color = color.orange, linewidth = 2, style = plot.style_linebr)
+plot(isNewDay ? na : upper1, "상단 1", color = color.new(color.red, 50), style = plot.style_linebr)
+plot(isNewDay ? na : lower1, "하단 1", color = color.new(color.blue, 50), style = plot.style_linebr)
+plot(isNewDay ? na : upper2, "상단 2", color = color.red, style = plot.style_linebr)
+plot(isNewDay ? na : lower2, "하단 2", color = color.blue, style = plot.style_linebr)
+
+// 이탈: 밴드 2 밖으로 나가는 순간 (날짜가 바뀐 캔들은 제외)
+breakUp = ta.crossover(close, upper2) and not isNewDay and barstate.isconfirmed
+breakDown = ta.crossunder(close, lower2) and not isNewDay and barstate.isconfirmed
+
+// 이탈 상태 기억: 1 = 위로 이탈, -1 = 아래로 이탈, 0 = 밴드 안
+var int outside = 0
+if isNewDay
+    outside := 0
+if breakUp
+    outside := 1
+if breakDown
+    outside := -1
+
+// 복귀: 이탈한 뒤 밴드 1 안쪽으로 돌아오는 순간
+returnFromUp = outside == 1 and close < upper1 and barstate.isconfirmed
+returnFromDown = outside == -1 and close > lower1 and barstate.isconfirmed
+if returnFromUp or returnFromDown
+    outside := 0
+
+plotshape(breakUp, "상단 이탈", shape.triangleup, location.abovebar, color.red, size = size.small)
+plotshape(breakDown, "하단 이탈", shape.triangledown, location.belowbar, color.blue, size = size.small)
+plotshape(returnFromUp or returnFromDown, "밴드 복귀", shape.diamond, location.abovebar, color.gray, size = size.tiny)
+bgcolor(outside == 1 ? color.new(color.red, 90) : outside == -1 ? color.new(color.blue, 90) : na, title = "이탈 상태")
+
+alertcondition(breakUp, "상단 이탈", "가격이 VWAP 상단 밴드 2를 넘어섰습니다")
+alertcondition(breakDown, "하단 이탈", "가격이 VWAP 하단 밴드 2 아래로 내려갔습니다")

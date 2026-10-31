@@ -4,3 +4,7 @@
 
 | 파일 | 본문 절 | 설명 |
 |---|---|---|
+| vwap_basic.pine | 05-1 | VWAP 직접 구현, 일 단위 초기화, 내장 함수 비교 |
+| vwap_bands.pine | 05-2 | 거래량 가중 표준편차 밴드, 이탈·복귀 감지 |
+| vwap_filters.pine | 05-3 | VWAP 회복 신호에 상대 거래량·추세·시간 필터 결합 |
+| vwap_intraday.pine | 05-4 | 세션·앵커드·기간 VWAP을 결합한 단타 신호 지표 |

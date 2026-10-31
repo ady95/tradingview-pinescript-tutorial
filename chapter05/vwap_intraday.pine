@@ -1,0 +1,52 @@
+//@version=6
+indicator("05-4 변형 VWAP 단타 신호", overlay = true, max_labels_count = 200)
+
+const string GRP_A = "앵커드 VWAP"
+const string GRP_S = "신호"
+anchorTime = input.time(timestamp("01 Oct 2026 09:00 +0900"), "기준 시점", confirm = true, group = GRP_A)
+rollLen = input.int(30, "기간 VWAP 캔들 수", minval = 2, group = GRP_S)
+volMult = input.float(1.5, "거래량 배수", minval = 0.1, step = 0.1, group = GRP_S)
+startHhmm = input.int(915, "신호 시작 시각(HHMM)", minval = 900, maxval = 1530, group = GRP_S)
+endHhmm = input.int(1430, "신호 마감 시각(HHMM)", minval = 900, maxval = 1530, group = GRP_S)
+
+isNewDay = timeframe.change("D")
+
+// 1) 세션 VWAP: 매일 초기화
+sessVwap = ta.vwap(hlc3)
+
+// 2) 앵커드 VWAP: 사용자가 고른 시점부터 누적 (그 전에는 na)
+var float aSumPV = na
+var float aSumV = na
+if time >= anchorTime and na(aSumV)
+    aSumPV := 0.0
+    aSumV := 0.0
+if not na(aSumV)
+    aSumPV += hlc3 * nz(volume)
+    aSumV += nz(volume)
+anchoredVwap = aSumV > 0 ? aSumPV / aSumV : na
+
+// 3) 기간 VWAP: 최근 rollLen개 캔들만으로 계산 (날짜와 무관하게 이어짐)
+rollVwap = math.sum(hlc3 * volume, rollLen) / math.sum(volume, rollLen)
+
+// 신호 시간대: 거래소 시간대 기준 HHMM
+hhmm = hour(time, syminfo.timezone) * 100 + minute(time, syminfo.timezone)
+inTime = hhmm >= startHhmm and hhmm < endHhmm
+
+volumeOk = volume / ta.sma(volume, 20) >= volMult
+reclaim = ta.crossover(close, sessVwap) and not isNewDay
+
+// 매수 신호: 세션 VWAP 회복 + 앵커드 VWAP 위 + 기간 VWAP 상승 + 거래량 + 시간대
+longSignal = reclaim and close > anchoredVwap and rollVwap > rollVwap[1] and volumeOk and inTime and barstate.isconfirmed
+// 주의 신호: 세션 VWAP 아래로 다시 이탈
+vwapLost = ta.crossunder(close, sessVwap) and not isNewDay and barstate.isconfirmed
+
+plot(isNewDay ? na : sessVwap, "세션 VWAP", color = color.orange, linewidth = 2, style = plot.style_linebr)
+plot(anchoredVwap, "앵커드 VWAP", color = color.purple, linewidth = 2)
+plot(rollVwap, "기간 VWAP", color = color.gray)
+
+if longSignal
+    label.new(bar_index, low, "매수 " + str.tostring(close, format.mintick) + "\nVWAP " + str.tostring(sessVwap, format.mintick), style = label.style_label_up, color = color.red, textcolor = color.white, size = size.small)
+plotshape(vwapLost, "VWAP 이탈", shape.xcross, location.abovebar, color.blue, size = size.tiny)
+
+alertcondition(longSignal, "VWAP 단타 매수", "변형 VWAP 매수 조건이 충족되었습니다")
+alertcondition(vwapLost, "VWAP 이탈", "가격이 세션 VWAP 아래로 내려갔습니다")

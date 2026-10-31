@@ -1,0 +1,57 @@
+//@version=6
+indicator("05-3 VWAP 신호와 필터", overlay = true)
+
+const string GRP_F = "필터"
+useVolume = input.bool(true, "상대 거래량", group = GRP_F)
+volMult = input.float(1.5, "거래량 배수", minval = 0.1, step = 0.1, group = GRP_F)
+useTrend = input.bool(true, "추세: EMA 위이고 EMA 상승 중", group = GRP_F)
+trendLen = input.int(100, "추세 EMA 기간", minval = 10, group = GRP_F)
+useTime = input.bool(true, "장 초반 제외", group = GRP_F)
+skipMinutes = input.int(15, "제외 시간(분)", minval = 0, group = GRP_F)
+
+isNewDay = timeframe.change("D")
+sessVwap = ta.vwap(hlc3)
+
+// 장 시작 후 경과 시간(분): 하루의 첫 캔들 시각을 기억해 두고 뺀다
+var int dayStart = na
+if isNewDay or na(dayStart)
+    dayStart := time
+minutesFromOpen = (time - dayStart) / 60000.0
+
+// 필터에 쓸 값은 모두 전역에서 매 캔들 계산한다
+volRatio = volume / ta.sma(volume, 20)
+trendEma = ta.ema(close, trendLen)
+
+// 기본 신호: 종가가 VWAP를 아래에서 위로 회복
+baseSignal = ta.crossover(close, sessVwap) and not isNewDay and barstate.isconfirmed
+
+volumeOk = not useVolume or volRatio >= volMult
+trendOk = not useTrend or (close > trendEma and trendEma > trendEma[1])
+timeOk = not useTime or minutesFromOpen >= skipMinutes
+
+finalSignal = baseSignal and volumeOk and trendOk and timeOk
+filteredOut = baseSignal and not finalSignal
+
+var int baseCount = 0
+var int finalCount = 0
+if baseSignal
+    baseCount += 1
+if finalSignal
+    finalCount += 1
+
+plot(isNewDay ? na : sessVwap, "VWAP", color = color.orange, linewidth = 2, style = plot.style_linebr)
+plot(trendEma, "추세 EMA", color = color.gray)
+
+plotshape(finalSignal, "최종 신호", shape.labelup, location.belowbar, color.red, text = "매수", textcolor = color.white, size = size.small)
+plotshape(filteredOut, "걸러진 신호", shape.xcross, location.belowbar, color.gray, size = size.tiny)
+alertcondition(finalSignal, "VWAP 회복 신호", "필터를 통과한 VWAP 회복 신호입니다")
+
+var table stats = table.new(position.top_right, 2, 3, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
+if barstate.islast
+    passRate = baseCount > 0 ? finalCount * 100.0 / baseCount : 0.0
+    stats.cell(0, 0, "기본 신호", text_color = color.white)
+    stats.cell(1, 0, str.tostring(baseCount), text_color = color.white)
+    stats.cell(0, 1, "최종 신호", text_color = color.white)
+    stats.cell(1, 1, str.tostring(finalCount), text_color = color.red)
+    stats.cell(0, 2, "통과율", text_color = color.white)
+    stats.cell(1, 2, str.tostring(passRate, "0.0") + "%", text_color = color.white)

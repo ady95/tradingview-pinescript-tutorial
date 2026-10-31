@@ -1,0 +1,31 @@
+//@version=6
+indicator("05-1 VWAP 직접 구현", overlay = true)
+
+src = input.source(hlc3, "가격 소스")
+
+// 하루가 바뀐 첫 캔들인지 확인한다 (분봉 차트 기준)
+isNewDay = timeframe.change("D")
+
+// 누적 합계: 하루가 바뀌면 0부터 다시 쌓는다
+var float sumPV = 0.0
+var float sumV = 0.0
+if isNewDay
+    sumPV := 0.0
+    sumV := 0.0
+sumPV += src * nz(volume)
+sumV += nz(volume)
+
+// VWAP = (가격 × 거래량)의 합 ÷ 거래량의 합
+myVwap = sumV > 0 ? sumPV / sumV : na
+
+// 내장 함수와의 차이 (데이터 창에서 확인)
+plot(myVwap - ta.vwap(src), "VWAP 차이", display = display.data_window)
+
+// 날짜가 바뀌는 캔들에서 선을 끊어 하루 단위로 보이게 한다
+plot(isNewDay ? na : myVwap, "VWAP", color = color.orange, linewidth = 2, style = plot.style_linebr)
+
+// 가격이 VWAP 위인지 아래인지 배경으로 표시
+bgcolor(close > myVwap ? color.new(color.red, 92) : color.new(color.blue, 92), title = "VWAP 위·아래")
+
+if barstate.islast and sumV == 0
+    runtime.error("거래량 데이터가 없는 종목입니다. VWAP는 거래량이 있는 종목에서만 계산할 수 있습니다.")
