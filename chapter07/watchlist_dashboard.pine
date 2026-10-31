@@ -38,7 +38,7 @@ for i = 0 to symbols.size() - 1
         alert(sym + " 거래량 급증 + 20캔들 고가 돌파 (종가 " + str.tostring(c) + ")", alert.freq_once_per_bar_close)
     if barstate.islast
         row = i + 1
-        dash.cell(0, row, sym, text_color = color.black, text_halign = text.align_left)
+        dash.cell(0, row, str.split(sym, ":").last(), text_color = color.black, text_halign = text.align_left)
         dash.cell(1, row, str.tostring(c), text_color = color.black)
         dash.cell(2, row, str.tostring(chg, "0.00") + "%", text_color = chg >= 0 ? color.red : color.blue)
         dash.cell(3, row, str.tostring(rsi, "0.0"), text_color = rsi > 70 ? color.red : rsi < 30 ? color.blue : color.black)
