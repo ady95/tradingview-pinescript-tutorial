@@ -1,0 +1,74 @@
+//@version=6
+strategy("10 파라미터·구간 검증", overlay = true, initial_capital = 10000000, currency = currency.KRW, pyramiding = 2, commission_type = strategy.commission.percent, commission_value = 0.165, slippage = 0)
+
+const string GRP_T = "검증 기간"
+const string GRP_S = "신호"
+const string GRP_R = "위험 관리"
+const string GRP_M = "시장 구간"
+startTime = input.time(timestamp("01 Jan 1990 00:00 +0900"), "시작", group = GRP_T)
+endTime = input.time(timestamp("31 Dec 2099 00:00 +0900"), "끝", group = GRP_T)
+atrLen = input.int(10, "ATR 기간", minval = 1, group = GRP_S)
+stMult = input.float(3.0, "추세선 ATR 배수", minval = 0.5, step = 0.5, group = GRP_S)
+trendLen = input.int(200, "추세 필터 EMA", minval = 10, group = GRP_S)
+riskPct = input.float(1.0, "1회 위험 비율(%)", minval = 0.1, step = 0.1, group = GRP_R)
+stopMult = input.float(2.0, "손절 ATR 배수", minval = 0.5, step = 0.5, group = GRP_R)
+regimeLen = input.int(20, "기울기 측정 기간", minval = 5, group = GRP_M)
+slopeLimit = input.float(2.0, "추세 판단 기울기(%)", minval = 0.1, step = 0.1, group = GRP_M)
+
+inRange = time >= startTime and time <= endTime
+
+// 09장과 같은 추세추종 전략 (롱만)
+[stLine, stDir] = ta.supertrend(stMult, atrLen)
+trendEma = ta.ema(close, trendLen)
+atr = ta.atr(atrLen)
+newHigh = ta.crossover(close, ta.highest(high, 20)[1])
+upTrend = stDir < 0
+turnUp = upTrend and not upTrend[1]
+turnDown = not upTrend and upTrend[1]
+
+stopDist = atr * stopMult
+qty = math.max(math.min(math.floor(strategy.equity * riskPct / 100 / stopDist), math.floor(strategy.equity / close)), 1)
+
+var float entryStop = na
+if inRange and turnUp and close > trendEma
+    entryStop := close - stopDist
+    strategy.entry("롱", strategy.long, qty)
+if inRange and strategy.position_size > 0 and strategy.opentrades < 2 and newHigh
+    strategy.entry("롱 추가", strategy.long, qty)
+if strategy.position_size > 0
+    strategy.exit("손절", stop = entryStop)
+    if turnDown or not inRange
+        strategy.close_all(comment = turnDown ? "추세 전환" : "기간 종료")
+
+// 시장 구간: EMA의 기울기로 상승(0)·횡보(1)·하락(2)을 나눈다
+slope = (trendEma - trendEma[regimeLen]) / trendEma[regimeLen] * 100
+regime = slope > slopeLimit ? 0 : slope < -slopeLimit ? 2 : 1
+
+// 구간별 성과: 전날 판단한 구간에 오늘의 자산 변화를 기록한다 (미래 정보를 쓰지 않도록)
+var array<float> stratGrowth = array.from(1.0, 1.0, 1.0)
+var array<float> holdGrowth = array.from(1.0, 1.0, 1.0)
+var array<int> regimeBars = array.from(0, 0, 0)
+if inRange and not na(slope[1]) and not na(close[1])
+    r = regime[1]
+    stratGrowth.set(r, stratGrowth.get(r) * strategy.equity / strategy.equity[1])
+    holdGrowth.set(r, holdGrowth.get(r) * close / close[1])
+    regimeBars.set(r, regimeBars.get(r) + 1)
+
+plot(stLine, "추세선", color = upTrend ? color.red : color.blue, style = plot.style_linebr)
+plot(trendEma, "추세 필터 EMA", color = color.gray, linewidth = 2)
+bgcolor(not inRange ? color.new(color.gray, 85) : regime == 0 ? color.new(color.red, 93) : regime == 2 ? color.new(color.blue, 93) : na, title = "시장 구간")
+
+var table stats = table.new(position.top_right, 4, 4, bgcolor = color.new(color.white, 10), border_color = color.gray, border_width = 1)
+if barstate.islast
+    names = array.from("상승", "횡보", "하락")
+    stats.cell(0, 0, "구간", text_color = color.black)
+    stats.cell(1, 0, "캔들 수", text_color = color.black)
+    stats.cell(2, 0, "전략", text_color = color.black)
+    stats.cell(3, 0, "보유", text_color = color.black)
+    for i = 0 to 2
+        s = (stratGrowth.get(i) - 1) * 100
+        h = (holdGrowth.get(i) - 1) * 100
+        stats.cell(0, i + 1, names.get(i), text_color = color.black)
+        stats.cell(1, i + 1, str.tostring(regimeBars.get(i)), text_color = color.black)
+        stats.cell(2, i + 1, str.tostring(s, "0.0") + "%", text_color = s >= 0 ? color.red : color.blue)
+        stats.cell(3, i + 1, str.tostring(h, "0.0") + "%", text_color = h >= 0 ? color.red : color.blue)
