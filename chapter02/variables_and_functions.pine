@@ -1,0 +1,32 @@
+//@version=6
+indicator("02-1 변수·타입·함수", overlay = true)
+
+// 상수(const): 컴파일할 때 값이 정해지고 바뀌지 않는다
+const int SHORT_LEN = 5
+
+// 입력(input): 설정 창에서 바꾸는 값
+longLen = input.int(20, "장기 이동평균 기간", minval = 1)
+
+// 시리즈(series): 캔들마다 값이 달라진다
+float price = close
+
+// 사용자 정의 함수: 마지막 줄의 값이 반환값이 된다
+pctChange(float a, float b) =>
+    (a - b) / b * 100
+
+// 두 값을 한꺼번에 돌려주는 함수(튜플 반환)
+movingAverages(float src, int shortLength, int longLength) =>
+    [ta.sma(src, shortLength), ta.sma(src, longLength)]
+
+[shortMa, longMa] = movingAverages(price, SHORT_LEN, longLen)
+gap = pctChange(shortMa, longMa)
+
+// 이미 선언한 변수에 새 값을 넣을 때는 := 를 쓴다
+lineColor = color.gray
+if gap > 0
+    lineColor := color.red
+else if gap < 0
+    lineColor := color.blue
+
+plot(shortMa, "단기 이동평균", color = lineColor, linewidth = 2)
+plot(longMa, "장기 이동평균", color = color.orange)

@@ -1,0 +1,23 @@
+//@version=6
+indicator("02-4 실행 모델 관찰", overlay = true)
+
+// var: 캔들이 확정될 때만 값이 쌓인다 (실시간 캔들에서는 틱마다 롤백)
+var int varCount = 0
+// varip: 롤백되지 않아 실시간 캔들의 틱마다 값이 쌓인다
+varip int varipCount = 0
+
+varCount += 1
+varipCount += 1
+
+// 같은 신호를 미확정 상태와 확정 상태로 나눠 표시
+crossUp = ta.crossover(close, ta.sma(close, 20))
+confirmedUp = crossUp and barstate.isconfirmed
+
+plotshape(crossUp, "미확정 신호", shape.circle, location.belowbar, color.new(color.gray, 50))
+plotshape(confirmedUp, "확정 신호", shape.triangleup, location.belowbar, color.green)
+
+// 마지막 캔들 위에 실행 상태 표시 (라벨 하나를 만들어 두고 위치·내용만 갱신)
+var label info = label.new(bar_index, high, "", style = label.style_label_down, color = color.white, textcolor = color.black)
+if barstate.islast
+    info.set_xy(bar_index, high)
+    info.set_text(str.format("var: {0}\nvarip: {1}\n실시간 캔들: {2}", varCount, varipCount, barstate.isrealtime ? "예" : "아니요"))

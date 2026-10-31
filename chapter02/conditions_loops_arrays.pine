@@ -1,0 +1,27 @@
+//@version=6
+indicator("02-3 조건문·반복문·배열", overlay = false)
+
+lookback = input.int(10, "비교 기간", minval = 1)
+
+// for 반복문: 최근 lookback개 캔들 중 현재보다 종가가 낮았던 캔들 수
+lowerCount = 0
+for i = 1 to lookback
+    if close[i] < close
+        lowerCount += 1
+
+// 배열: 최근 5개 캔들의 거래량 보관 (var로 선언해 캔들 사이에 유지)
+var volumes = array.new<float>()
+volumes.push(volume)
+if volumes.size() > 5
+    volumes.shift()
+avgVolume5 = volumes.avg()
+
+// switch: 상태를 문자열로 분류
+state = switch
+    lowerCount >= lookback * 0.8 => "강세"
+    lowerCount <= lookback * 0.2 => "약세"
+    => "중립"
+
+stateColor = state == "강세" ? color.red : state == "약세" ? color.blue : color.gray
+plot(lowerCount, "아래 캔들 수", color = stateColor, style = plot.style_columns)
+plot(volume > avgVolume5 * 2 ? lookback : na, "거래량 급증", color = color.orange, style = plot.style_circles, linewidth = 3)

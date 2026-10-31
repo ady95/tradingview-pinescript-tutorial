@@ -1,0 +1,20 @@
+//@version=6
+indicator("02-2 시계열 기초", overlay = false)
+
+// 전일 대비 등락률: close[1]은 한 캔들 전 종가
+chg = (close - close[1]) / close[1] * 100
+
+// 첫 캔들에는 이전 값이 없어 na가 된다 → nz()로 0으로 바꾼다
+chgSafe = nz(chg)
+
+// 최근 20개 캔들 중 최고 종가 대비 현재 위치
+highest20 = ta.highest(close, 20)
+fromHigh = (close - highest20) / highest20 * 100
+
+// 마지막으로 양봉이 나온 뒤 지난 캔들 수
+barsSinceUp = ta.barssince(close > open)
+
+plot(chgSafe, "등락률(%)", color = chgSafe >= 0 ? color.red : color.blue, style = plot.style_columns)
+plot(fromHigh, "20일 고점 대비(%)", color = color.orange)
+plot(barsSinceUp, "양봉 후 경과 캔들 수", color = color.gray, display = display.data_window)
+hline(0, "기준선", color = color.gray)
