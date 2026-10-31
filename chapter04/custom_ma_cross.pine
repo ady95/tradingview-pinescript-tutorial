@@ -23,8 +23,8 @@ smaSlow = mySma(close, slowLen)
 emaFast = myEma(close, fastLen)
 
 // 내장 함수와의 차이: 0에 가까우면 직접 구현이 맞다 (데이터 창에서 확인)
-plot(smaFast - ta.sma(close, fastLen), "SMA 차이", display = display.data_window)
-plot(emaFast - ta.ema(close, fastLen), "EMA 차이", display = display.data_window)
+plot(smaFast - ta.sma(close, fastLen), "SMA 차이", display = display.data_window, precision = 4)
+plot(emaFast - ta.ema(close, fastLen), "EMA 차이", display = display.data_window, precision = 4)
 
 plot(smaFast, "SMA 단기", color = color.orange, linewidth = 2)
 plot(smaSlow, "SMA 장기", color = color.purple, linewidth = 2)

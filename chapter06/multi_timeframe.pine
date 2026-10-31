@@ -27,4 +27,4 @@ relStrength = ratio / baseRatio * 100
 
 plot(htfEma, "상위 시간대 EMA", color = color.purple, linewidth = 2, style = plot.style_stepline)
 plotshape(not na(htfCloseGaps), "상위 캔들 갱신", shape.circle, location.top, color.gray, size = size.tiny)
-plot(relStrength, "상대 강도", display = display.data_window)
+plot(relStrength, "상대 강도", display = display.data_window, precision = 2)

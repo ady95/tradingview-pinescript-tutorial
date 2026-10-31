@@ -14,7 +14,7 @@ fromHigh = (close - highest20) / highest20 * 100
 // 마지막으로 양봉이 나온 뒤 지난 캔들 수
 barsSinceUp = ta.barssince(close > open)
 
-plot(chgSafe, "등락률(%)", color = chgSafe >= 0 ? color.red : color.blue, style = plot.style_columns)
-plot(fromHigh, "20일 고점 대비(%)", color = color.orange)
+plot(chgSafe, "등락률(%)", color = chgSafe >= 0 ? color.red : color.blue, style = plot.style_columns, precision = 2)
+plot(fromHigh, "20일 고점 대비(%)", color = color.orange, precision = 2)
 plot(barsSinceUp, "양봉 후 경과 캔들 수", color = color.gray, display = display.data_window)
 hline(0, "기준선", color = color.gray)

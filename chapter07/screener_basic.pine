@@ -6,9 +6,9 @@ chg = (close - close[1]) / close[1] * 100
 rsi = ta.rsi(close, 14)
 volRatio = volume / ta.sma(volume, 20)
 
-plot(chg, "등락률(%)", color = chg >= 0 ? color.red : color.blue, style = plot.style_columns)
-plot(rsi, "RSI", color = color.purple)
-plot(volRatio, "거래량 배수", color = color.orange)
+plot(chg, "등락률(%)", color = chg >= 0 ? color.red : color.blue, style = plot.style_columns, precision = 2)
+plot(rsi, "RSI", color = color.purple, precision = 2)
+plot(volRatio, "거래량 배수", color = color.orange, precision = 2)
 
 alertcondition(ta.crossover(rsi, 50), "RSI 50 상향 돌파", "RSI가 50을 상향 돌파했습니다")
 alertcondition(volRatio >= 2, "거래량 2배 이상", "거래량이 20일 평균의 2배 이상입니다")

@@ -32,7 +32,7 @@ lower2 = vwapVal - stdev * mult2
 
 // 내장 함수 ta.vwap()의 밴드와 비교
 [tvVwap, tvUpper, tvLower] = ta.vwap(src, isNewDay, mult1)
-plot(upper1 - tvUpper, "밴드 1 상단 차이", display = display.data_window)
+plot(upper1 - tvUpper, "밴드 1 상단 차이", display = display.data_window, precision = 4)
 
 plot(isNewDay ? na : vwapVal, "VWAP", color = color.orange, linewidth = 2, style = plot.style_linebr)
 plot(isNewDay ? na : upper1, "상단 1", color = color.new(color.red, 50), style = plot.style_linebr)

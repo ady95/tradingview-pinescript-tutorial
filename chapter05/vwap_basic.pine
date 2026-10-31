@@ -19,7 +19,7 @@ sumV += nz(volume)
 myVwap = sumV > 0 ? sumPV / sumV : na
 
 // 내장 함수와의 차이 (데이터 창에서 확인)
-plot(myVwap - ta.vwap(src), "VWAP 차이", display = display.data_window)
+plot(myVwap - ta.vwap(src), "VWAP 차이", display = display.data_window, precision = 4)
 
 // 날짜가 바뀌는 캔들에서 선을 끊어 하루 단위로 보이게 한다
 plot(isNewDay ? na : myVwap, "VWAP", color = color.orange, linewidth = 2, style = plot.style_linebr)

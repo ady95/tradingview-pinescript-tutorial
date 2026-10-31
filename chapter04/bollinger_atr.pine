@@ -24,7 +24,7 @@ isSqueeze = bandwidth <= ta.lowest(bandwidth, squeezeLookback)
 prevClose = nz(close[1], close)
 trueRange = math.max(high - low, math.abs(high - prevClose), math.abs(low - prevClose))
 myAtr = ta.rma(trueRange, atrLen)
-plot(myAtr - ta.atr(atrLen), "ATR 차이", display = display.data_window)
+plot(myAtr - ta.atr(atrLen), "ATR 차이", display = display.data_window, precision = 4)
 
 // 지금 매수한다면 손절가는 어디인가: 종가 - ATR × 배수
 stopPrice = close - myAtr * atrMult
@@ -37,5 +37,5 @@ fill(pUpper, pLower, color = color.new(color.gray, 90), title = "밴드 영역")
 bgcolor(isSqueeze ? color.new(color.yellow, 85) : na, title = "수축 구간")
 
 plot(stopPrice, "ATR 손절가", color = color.new(color.blue, 30), style = plot.style_circles)
-plot(bandwidth, "밴드 폭(%)", display = display.data_window)
-plot(stopPct, "손절 거리(%)", display = display.data_window)
+plot(bandwidth, "밴드 폭(%)", display = display.data_window, precision = 2)
+plot(stopPct, "손절 거리(%)", display = display.data_window, precision = 2)

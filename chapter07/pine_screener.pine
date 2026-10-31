@@ -27,10 +27,10 @@ plot(score, "점수", color = score == 3 ? color.red : color.gray, style = plot.
 plot(trendNum, "추세", display = screenerOnly)
 plot(momentumNum, "모멘텀", display = screenerOnly)
 plot(volumeNum, "거래량", display = screenerOnly)
-plot(chg, "등락률(%)", display = screenerOnly)
-plot(rsi, "RSI", display = screenerOnly)
-plot(volRatio, "거래량 배수", display = screenerOnly)
-plot(distEma, "EMA 이격도(%)", display = screenerOnly)
+plot(chg, "등락률(%)", display = screenerOnly, precision = 2)
+plot(rsi, "RSI", display = screenerOnly, precision = 2)
+plot(volRatio, "거래량 배수", display = screenerOnly, precision = 2)
+plot(distEma, "EMA 이격도(%)", display = screenerOnly, precision = 2)
 hline(3, "만점", color = color.red, linestyle = hline.style_dotted)
 
 // 스크리너가 자동으로 불러오는 알림 조건은 앞의 두 개다

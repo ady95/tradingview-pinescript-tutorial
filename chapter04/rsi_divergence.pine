@@ -12,9 +12,9 @@ avgUp = ta.rma(up, rsiLen)
 avgDown = ta.rma(down, rsiLen)
 myRsi = avgDown == 0 ? 100 : avgUp == 0 ? 0 : 100 - 100 / (1 + avgUp / avgDown)
 
-plot(myRsi - ta.rsi(close, rsiLen), "RSI 차이", display = display.data_window)
+plot(myRsi - ta.rsi(close, rsiLen), "RSI 차이", display = display.data_window, precision = 4)
 
-plot(myRsi, "RSI", color = color.purple, linewidth = 2)
+plot(myRsi, "RSI", color = color.purple, linewidth = 2, precision = 2)
 h70 = hline(70, "과매수", color = color.red, linestyle = hline.style_dashed)
 h30 = hline(30, "과매도", color = color.blue, linestyle = hline.style_dashed)
 fill(h70, h30, color = color.new(color.purple, 92), title = "중립 구간")

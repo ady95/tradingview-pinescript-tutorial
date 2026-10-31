@@ -31,7 +31,7 @@ trendLine = dir == 1 ? longStop : shortStop
 
 // 내장 함수 ta.supertrend()와 비교 (내장 함수의 방향은 음수가 상승)
 [stLine, stDir] = ta.supertrend(stMult, atrLen)
-plot(trendLine - stLine, "추세선 차이", display = display.data_window)
+plot(trendLine - stLine, "추세선 차이", display = display.data_window, precision = 4)
 
 // 3) 돌파 신호: 채널 상단 + ATR 여유를 넘고, 추세가 상승일 때만
 breakout = ta.crossover(close, upper + atr * bufferAtr) and dir == 1 and barstate.isconfirmed

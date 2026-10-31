@@ -10,5 +10,5 @@ hasVolume = bool(volume)
 // 3) and/or는 앞쪽 결과만으로 답이 정해지면 뒤쪽을 평가하지 않는다(지연 평가)
 isUpWithVolume = hasVolume and close > open
 
-plot(half, "5 / 2", color = color.blue)
+plot(half, "5 / 2", color = color.blue, precision = 2)
 plot(isUpWithVolume ? 1 : 0, "거래량 있는 양봉", color = color.green, style = plot.style_columns)

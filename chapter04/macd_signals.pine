@@ -12,7 +12,7 @@ hist = macdLine - signalLine
 
 // 내장 함수 ta.macd()와 비교 (튜플로 세 값을 한 번에 받는다)
 [bMacd, bSignal, bHist] = ta.macd(close, fastLen, slowLen, sigLen)
-plot(hist - bHist, "히스토그램 차이", display = display.data_window)
+plot(hist - bHist, "히스토그램 차이", display = display.data_window, precision = 4)
 
 // 히스토그램 색: 0 위는 빨강, 아래는 파랑, 힘이 약해지면 연하게
 histColor = hist >= 0 ? (hist > hist[1] ? color.red : color.new(color.red, 60)) : (hist < hist[1] ? color.blue : color.new(color.blue, 60))

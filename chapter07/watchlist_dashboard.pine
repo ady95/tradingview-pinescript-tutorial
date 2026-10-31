@@ -20,14 +20,14 @@ status() =>
 
 symbols = array.from(s1, s2, s3, s4, s5, s6)
 
-var table dash = table.new(position.top_right, 6, 7, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
+var table dash = table.new(position.top_right, 6, 7, bgcolor = color.new(color.white, 10), border_color = color.gray, border_width = 1)
 if barstate.islast
-    dash.cell(0, 0, "종목", text_color = color.white)
-    dash.cell(1, 0, "종가", text_color = color.white)
-    dash.cell(2, 0, "등락률", text_color = color.white)
-    dash.cell(3, 0, "RSI", text_color = color.white)
-    dash.cell(4, 0, "거래량", text_color = color.white)
-    dash.cell(5, 0, "상태", text_color = color.white)
+    dash.cell(0, 0, "종목", text_color = color.black)
+    dash.cell(1, 0, "종가", text_color = color.black)
+    dash.cell(2, 0, "등락률", text_color = color.black)
+    dash.cell(3, 0, "RSI", text_color = color.black)
+    dash.cell(4, 0, "거래량", text_color = color.black)
+    dash.cell(5, 0, "상태", text_color = color.black)
 
 // v6의 동적 요청: 반복문 안에서 종목을 바꿔 가며 요청할 수 있다 (01-4)
 for i = 0 to symbols.size() - 1
@@ -38,9 +38,9 @@ for i = 0 to symbols.size() - 1
         alert(sym + " 거래량 급증 + 20캔들 고가 돌파 (종가 " + str.tostring(c) + ")", alert.freq_once_per_bar_close)
     if barstate.islast
         row = i + 1
-        dash.cell(0, row, sym, text_color = color.white, text_halign = text.align_left)
-        dash.cell(1, row, str.tostring(c), text_color = color.white)
+        dash.cell(0, row, sym, text_color = color.black, text_halign = text.align_left)
+        dash.cell(1, row, str.tostring(c), text_color = color.black)
         dash.cell(2, row, str.tostring(chg, "0.00") + "%", text_color = chg >= 0 ? color.red : color.blue)
-        dash.cell(3, row, str.tostring(rsi, "0.0"), text_color = rsi > 70 ? color.red : rsi < 30 ? color.blue : color.white)
-        dash.cell(4, row, str.tostring(volRatio, "0.0") + "배", text_color = volRatio >= volMult ? color.orange : color.white)
-        dash.cell(5, row, hot ? "급증+돌파" : breakout ? "돌파" : "-", text_color = hot ? color.red : color.white)
+        dash.cell(3, row, str.tostring(rsi, "0.0"), text_color = rsi > 70 ? color.red : rsi < 30 ? color.blue : color.black)
+        dash.cell(4, row, str.tostring(volRatio, "0.0") + "배", text_color = volRatio >= volMult ? color.orange : color.black)
+        dash.cell(5, row, hot ? "급증+돌파" : breakout ? "돌파" : "-", text_color = hot ? color.red : color.black)
