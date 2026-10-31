@@ -1,0 +1,38 @@
+//@version=6
+strategy("12 알림 전략", overlay = true, initial_capital = 10000000, currency = currency.KRW, commission_type = strategy.commission.percent, commission_value = 0.165)
+
+const string STRATEGY_ID = "trend_v1"
+qtyInput = input.int(1, "주문 수량(주)", minval = 1)
+atrLen = input.int(10, "ATR 기간", minval = 1)
+stMult = input.float(3.0, "추세선 ATR 배수", minval = 0.5, step = 0.5)
+trendLen = input.int(200, "추세 필터 EMA", minval = 10)
+
+// 08-4·09장과 같은 추세추종 신호 (롱만, 추가 매수·손절 없이 단순화)
+[stLine, stDir] = ta.supertrend(stMult, atrLen)
+trendEma = ta.ema(close, trendLen)
+upTrend = stDir < 0
+turnUp = upTrend and not upTrend[1]
+turnDown = not upTrend and upTrend[1]
+
+// Webhook으로 보낼 신호(JSON). 비밀값은 코드가 아니라 알림 메시지 칸에서 붙인다 (12-2)
+signalJson(string action, int qty) =>
+    // 지연 시세 계정에서는 거래소가 "KRX_DLY"로 표시되므로 "_DLY"를 떼어 낸다 (07-4)
+    string exchange = str.replace_all(syminfo.prefix, "_DLY", "")
+    string id = STRATEGY_ID + "-" + action + "-" + syminfo.ticker + "-" + str.tostring(time)
+    '{"strategy":"' + STRATEGY_ID + '","action":"' + action + '","ticker":"' + syminfo.ticker + '","exchange":"' + exchange + '","qty":' + str.tostring(qty) + ',"price":' + str.tostring(close) + ',"bar_time":' + str.tostring(time) + ',"signal_id":"' + id + '"}'
+
+if turnUp and close > trendEma and strategy.position_size == 0
+    strategy.entry("매수", strategy.long, qtyInput, alert_message = signalJson("buy", qtyInput))
+if turnDown and strategy.position_size > 0
+    strategy.close("매수", comment = "추세 전환", alert_message = signalJson("sell", int(strategy.position_size)))
+
+plot(stLine, "추세선", color = upTrend ? color.red : color.blue, style = plot.style_linebr)
+plot(trendEma, "추세 필터 EMA", color = color.gray, linewidth = 2)
+
+// 마지막 신호의 JSON을 차트에서 확인하는 용도 (Webhook 본문 점검)
+var string lastJson = ""
+if turnUp and close > trendEma
+    lastJson := signalJson("buy", qtyInput)
+var table jsonBox = table.new(position.bottom_right, 1, 1, bgcolor = color.new(color.white, 10), border_color = color.gray, border_width = 1)
+if barstate.islast and lastJson != ""
+    jsonBox.cell(0, 0, "마지막 매수 신호 JSON\n" + lastJson, text_color = color.black, text_size = size.small, text_halign = text.align_left)
