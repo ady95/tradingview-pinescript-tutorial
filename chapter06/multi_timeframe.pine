@@ -6,7 +6,7 @@ emaLen = input.int(20, "상위 시간대 EMA 기간", minval = 1)
 compareSym = input.symbol("KRX:KOSPI", "비교 종목")
 
 // 상위 시간대는 차트 주기보다 길어야 한다
-if timeframe.in_seconds(tf) < timeframe.in_seconds()
+if timeframe.in_seconds(tf) <= timeframe.in_seconds()
     runtime.error("상위 시간대는 차트 주기보다 길어야 합니다.")
 
 // 1) 상위 시간대 EMA: 확정된 직전 상위 캔들의 값만 가져온다 (이유는 06-4)

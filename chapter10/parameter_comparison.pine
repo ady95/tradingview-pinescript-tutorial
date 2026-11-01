@@ -27,13 +27,14 @@ turnUp = upTrend and not upTrend[1]
 turnDown = not upTrend and upTrend[1]
 
 stopDist = atr * stopMult
-qty = math.max(math.min(math.floor(strategy.equity * riskPct / 100 / stopDist), math.floor(strategy.equity / close)), 1)
+// 1주도 위험 한도 안에 들지 않으면 진입하지 않는다
+qty = math.min(math.floor(strategy.equity * riskPct / 100 / stopDist), math.floor(strategy.equity / close))
 
 var float entryStop = na
-if inRange and turnUp and close > trendEma
+if inRange and turnUp and close > trendEma and qty >= 1
     entryStop := close - stopDist
     strategy.entry("롱", strategy.long, qty)
-if inRange and strategy.position_size > 0 and strategy.opentrades < 2 and newHigh
+if inRange and strategy.position_size > 0 and strategy.opentrades < 2 and newHigh and qty >= 1
     strategy.entry("롱 추가", strategy.long, qty)
 if strategy.position_size > 0
     strategy.exit("손절", stop = entryStop)

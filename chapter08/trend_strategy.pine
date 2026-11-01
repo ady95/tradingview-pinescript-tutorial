@@ -29,15 +29,17 @@ addSignal = usePyramid and strategy.position_size > 0 and strategy.opentrades < 
 stopDist = atr * stopMult
 riskQty = math.floor(strategy.equity * riskPct / 100 / stopDist)
 maxQty = math.floor(strategy.equity / close)
-qty = math.max(math.min(riskQty, maxQty), 1)
+// 1주도 위험 한도 안에 들지 않으면 진입하지 않는다 (억지로 1주를 사면 한도를 넘는다)
+qty = math.min(riskQty, maxQty)
+canBuy = qty >= 1
 
 var float entryStop = na
-if longSignal
+if longSignal and canBuy
     entryStop := close - stopDist
     strategy.entry("롱", strategy.long, qty)
-if addSignal
+if addSignal and canBuy
     strategy.entry("롱 추가", strategy.long, qty)
-if shortSignal
+if shortSignal and canBuy
     entryStop := close + stopDist
     strategy.entry("숏", strategy.short, qty)
 
