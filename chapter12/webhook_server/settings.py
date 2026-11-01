@@ -24,6 +24,7 @@ class Settings:
     max_order_amount: int
     max_daily_loss: int
     allowed_tickers: frozenset
+    max_signal_age_hours: float
     dry_run: bool
 
 
@@ -31,8 +32,8 @@ def load_settings() -> Settings:
     load_dotenv(Path(".env"))
     load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
     secret = os.environ.get("WEBHOOK_SECRET", "")
-    if len(secret) < 16:
-        raise RuntimeError("WEBHOOK_SECRET을 16자 이상으로 설정하세요.")
+    if len(secret) < 16 or not secret.isascii():
+        raise RuntimeError("WEBHOOK_SECRET을 16자 이상의 영문·숫자로 설정하세요.")
     tickers = os.environ.get("ALLOWED_TICKERS", "005930,000660")
     return Settings(
         webhook_secret=secret,
@@ -42,5 +43,6 @@ def load_settings() -> Settings:
         max_order_amount=int(os.environ.get("MAX_ORDER_AMOUNT_KRW", "1000000")),
         max_daily_loss=int(os.environ.get("MAX_DAILY_LOSS_KRW", "300000")),
         allowed_tickers=frozenset(t.strip() for t in tickers.split(",") if t.strip()),
+        max_signal_age_hours=float(os.environ.get("MAX_SIGNAL_AGE_HOURS", "24")),
         dry_run=os.environ.get("DRY_RUN", "true").lower() != "false",
     )

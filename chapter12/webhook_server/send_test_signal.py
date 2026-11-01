@@ -1,6 +1,7 @@
 """TradingView 대신 테스트 신호를 보내 서버를 점검한다 (12장).
 
 사용법:  python send_test_signal.py buy 005930 1
+비밀값 오류 시험:  환경변수 TEST_SECRET에 다른 값을 넣고 실행한다 (서버 설정은 그대로 둔다)
 """
 import json
 import os
@@ -15,7 +16,7 @@ settings = load_settings()
 action, ticker, qty = sys.argv[1], sys.argv[2], int(sys.argv[3])
 bar_time = int(time.time() // 86400 * 86400 * 1000)
 message = {
-    "secret": settings.webhook_secret,
+    "secret": os.environ.get("TEST_SECRET", settings.webhook_secret),
     "signal": {
         "strategy": "trend_v1",
         "action": action,
@@ -28,6 +29,6 @@ message = {
     },
 }
 url = os.environ.get("WEBHOOK_URL", "http://127.0.0.1:8000/webhook")
-# TradingView처럼 text/plain 본문으로 보낸다
+# 메시지가 JSON이 아닐 때의 TradingView처럼 text/plain 본문으로 보낸다 (서버는 두 형식을 모두 받는다)
 response = httpx.post(url, content=json.dumps(message), headers={"Content-Type": "text/plain; charset=utf-8"})
 print(response.status_code, response.text)

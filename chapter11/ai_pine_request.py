@@ -1,9 +1,9 @@
 """자연어 요구사항을 보내 Pine Script 초안을 받는 예제 (11장).
 
-사용법:
-    python ai_pine_request.py prompts/11-1_good.md ai_generated_before.pine
+사용법 (chapter11 폴더에서 실행):
+    python ai_pine_request.py prompts/11-1_good.md my_result.pine
 
-환경변수(.env 또는 셸):
+환경변수(현재 폴더 또는 예제 저장소 루트의 .env, 또는 셸):
     OPENAI_API_KEY   API 키
     OPENAI_MODEL     사용할 모델 이름
     OPENAI_BASE_URL  (선택) 기본값은 https://api.openai.com/v1
@@ -22,7 +22,7 @@ SYSTEM_PROMPT = (
 )
 
 
-def load_dotenv(path: Path = Path(".env")) -> None:
+def load_dotenv(path: Path) -> None:
     """의존 패키지 없이 .env 파일의 KEY=VALUE를 환경변수로 읽는다."""
     if not path.exists():
         return
@@ -42,7 +42,8 @@ def extract_pine(text: str) -> str:
 def main() -> None:
     if len(sys.argv) != 3:
         sys.exit("사용법: python ai_pine_request.py <프롬프트 파일> <저장할 .pine 파일>")
-    load_dotenv()
+    load_dotenv(Path(".env"))
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")  # 예제 저장소 루트의 .env
     model = os.environ.get("OPENAI_MODEL")
     if not model:
         sys.exit("OPENAI_MODEL 환경변수를 설정하세요.")

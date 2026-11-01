@@ -1,7 +1,10 @@
 """키움증권 REST API 모의투자 클라이언트 (12장). 주문·조회에 필요한 최소 기능만 담았다."""
 import time
+from urllib.parse import urlsplit
 
 import httpx
+
+MOCK_HOST = "mockapi.kiwoom.com"
 
 
 class KiwoomError(Exception):
@@ -10,8 +13,10 @@ class KiwoomError(Exception):
 
 class KiwoomClient:
     def __init__(self, base_url: str, app_key: str, app_secret: str) -> None:
-        if "mockapi" not in base_url:
-            raise ValueError("이 예제는 모의투자 도메인(mockapi.kiwoom.com)에서만 동작합니다.")
+        # 주소 문자열에 mockapi가 들어 있는지가 아니라, 호스트가 정확히 모의투자 도메인인지 확인한다
+        url = urlsplit(base_url)
+        if url.scheme != "https" or url.hostname != MOCK_HOST or url.username or url.port not in (None, 443):
+            raise ValueError(f"이 예제는 모의투자 도메인(https://{MOCK_HOST})에서만 동작합니다.")
         self.base_url = base_url.rstrip("/")
         self.app_key = app_key
         self.app_secret = app_secret
