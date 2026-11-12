@@ -32,7 +32,8 @@ def load_settings() -> Settings:
     load_dotenv(Path(".env"))
     load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
     secret = os.environ.get("WEBHOOK_SECRET", "")
-    if len(secret) < 16 or not secret.isascii():
+    # isalnum()만 쓰면 한글도 통과하므로 ASCII 검사를 함께 한다
+    if len(secret) < 16 or not (secret.isascii() and secret.isalnum()):
         raise RuntimeError("WEBHOOK_SECRET을 16자 이상의 영문·숫자로 설정하세요.")
     tickers = os.environ.get("ALLOWED_TICKERS", "005930,000660")
     return Settings(
