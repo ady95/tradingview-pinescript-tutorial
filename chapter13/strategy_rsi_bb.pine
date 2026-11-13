@@ -1,0 +1,47 @@
+//@version=6
+strategy("RSI + BB Long (ATR SL/TP, Time Exit)", overlay = true, initial_capital = 10000000, currency = currency.KRW, default_qty_type = strategy.percent_of_equity, default_qty_value = 100, commission_type = strategy.commission.percent, commission_value = 0.165, slippage = 0)
+
+// ── 입력값
+rsiLen    = input.int(14, "RSI 길이", minval = 1)
+rsiLevel  = input.float(30, "RSI 상향 돌파 기준")
+bbLen     = input.int(20, "볼린저밴드 길이", minval = 1)
+bbMult    = input.float(2.0, "볼린저밴드 배수", minval = 0.1)
+atrLen    = input.int(14, "ATR 길이", minval = 1)
+slMult    = input.float(2.0, "손절 ATR 배수", minval = 0.1)
+tpMult    = input.float(3.0, "익절 ATR 배수", minval = 0.1)
+maxBars   = input.int(10, "시간 청산 캔들 수", minval = 1)
+
+// ── 지표 계산 (모든 ta 함수는 if 블록 밖, 전역에서 매 봉 호출)
+rsiVal                 = ta.rsi(close, rsiLen)
+[bbMid, bbUpper, bbLower] = ta.bb(close, bbLen, bbMult)
+atrVal                 = ta.atr(atrLen)
+rsiCrossUp             = ta.crossover(rsiVal, rsiLevel)
+
+// ── 매수 신호 (확정봉 기준)
+longSignal = barstate.isconfirmed and rsiCrossUp and close > bbLower
+
+// ── 진입: 신호 봉 종가에 주문 → 다음 봉 시가 체결(기본 체결 방식)
+var float entryAtr = na
+if longSignal and strategy.position_size == 0
+    entryAtr := atrVal
+    strategy.entry("Long", strategy.long)
+
+// ── 손절/익절/시간 청산
+var float stopPrice = na
+var float tpPrice   = na
+if strategy.position_size > 0
+    entryPrice = strategy.position_avg_price
+    stopPrice := entryPrice - entryAtr * slMult
+    tpPrice   := entryPrice + entryAtr * tpMult
+    strategy.exit("SL/TP", "Long", stop = stopPrice, limit = tpPrice)
+    barsSinceEntry = bar_index - strategy.opentrades.entry_bar_index(0)
+    if barsSinceEntry >= maxBars
+        strategy.close("Long", comment = "Time Exit")
+else
+    stopPrice := na
+    tpPrice   := na
+
+// ── 표시
+plot(stopPrice, "손절가", color = color.blue, linewidth = 2, style = plot.style_linebr)
+plot(tpPrice,   "익절가", color = color.red,  linewidth = 2, style = plot.style_linebr)
+plotshape(longSignal, "매수 신호", shape.triangleup, location.belowbar, color.green, size = size.small)

@@ -8,6 +8,9 @@ Claude Code에 TradingView 공식 MCP 서버(베타)를 연결해 시세 조회�
 |---|---|---|
 | `.claude/settings.json` | TradingView MCP의 쓰기 도구 12개(스크립트 저장, 알림·관심종목 변경)를 막는 설정. 이 폴더에서 Claude Code를 실행하면 적용됩니다 | 13-1 |
 | `prompts/13-2_screen.md` | 스크리너로 후보를 넓게 거른 뒤 07-3 지표 코드로 네 조건을 판정하는 요청 예시 | 13-2 |
+| `CLAUDE.md` | Claude Code가 이 폴더에서 자동으로 읽는 작업 규칙 (검증 → 백테스트 순서, 결과 보고 형식) | 13-3 |
+| `prompts/13-3_strategy.md` | 11-3과 같은 요구사항으로 전략 작성·검증·백테스트를 요청하는 예시 | 13-3 |
+| `strategy_rsi_bb.pine` | 위 요청으로 Claude Code가 만든 전략 (실측 결과 그대로, 수정하지 않음) | 13-3 |
 
 서버 등록 (모든 폴더에서 사용):
 
