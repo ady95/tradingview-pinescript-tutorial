@@ -7,7 +7,7 @@
 ## 사용 방법
 
 - `.pine` 파일: TradingView 차트 하단의 **Pine Editor**를 열고 파일 내용을 붙여 넣은 뒤 **Add to chart**를 누릅니다. 모든 코드는 Pine Script v6(`//@version=6`) 기준입니다.
-- Python 예제(11~12장): Python 3.11 이상에서 실행합니다. `.env.example`을 `.env`로 복사해 자신의 값을 채운 뒤 사용합니다. `.env`는 Git에 커밋되지 않습니다.
+- Python 예제(11~13장): Python 3.11 이상에서 실행합니다. `.env.example`을 `.env`로 복사해 자신의 값을 채운 뒤 사용합니다. `.env`는 Git에 커밋되지 않습니다.
 
 ## 장별 예제
 
