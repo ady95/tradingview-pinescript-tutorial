@@ -25,6 +25,7 @@
 | [chapter10](chapter10/) | 10장. 전략 최적화와 과최적화 방지 |
 | [chapter11](chapter11/) | 11장. AI로 Pine Script 개발하기 |
 | [chapter12](chapter12/) | 12장. Webhook 기반 자동매매 연동 따라하기 |
+| [chapter13](chapter13/) | 13장. Claude Code와 TradingView MCP |
 
 ## 유의사항
 

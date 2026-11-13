@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "deny": [
+      "mcp__mcp-tradingview__mcp-tv-create-pine-script",
+      "mcp__mcp-tradingview__mcp-tv-update-pine-script",
+      "mcp__mcp-tradingview__mcp-tv-create-alert",
+      "mcp__mcp-tradingview__mcp-tv-update-alert",
+      "mcp__mcp-tradingview__mcp-tv-delete-alert",
+      "mcp__mcp-tradingview__mcp-tv-stop-alerts",
+      "mcp__mcp-tradingview__mcp-tv-restart-alerts",
+      "mcp__mcp-tradingview__mcp-watchlist-create-watchlist",
+      "mcp__mcp-tradingview__mcp-watchlist-update-watchlist",
+      "mcp__mcp-tradingview__mcp-watchlist-delete-watchlist",
+      "mcp__mcp-tradingview__mcp-watchlist-add-to-watchlist",
+      "mcp__mcp-tradingview__mcp-watchlist-remove-from-watchlist"
+    ]
+  }
+}
