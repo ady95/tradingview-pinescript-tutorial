@@ -2,7 +2,7 @@
 
 Claude Code에 TradingView 공식 MCP 서버(베타)를 연결해 시세 조회·Pine Script 검증·백테스트를 자동화하는 예제입니다.
 
-필요한 것: Claude Code(Claude 유료 요금제), TradingView Essential 이상 요금제(체험판 불가).
+필요한 것: Claude Code(책은 Claude 유료 구독 로그인 기준, API 과금 등 다른 인증 방식도 가능), TradingView Essential 이상 요금제(체험판 불가).
 
 | 파일 | 내용 | 절 |
 |---|---|---|
@@ -21,5 +21,11 @@ claude mcp add --transport http --scope user mcp-tradingview https://mcp.trading
 ```
 
 등록 후 Claude Code를 다시 실행하고 `/mcp`에서 TradingView 계정으로 로그인합니다.
+
+`.claude/settings.json`은 TradingView 쓰기 도구만 막습니다. 13-4의 모의매매 조회 실습은 셸·파일 수정 도구도 빼고 실행합니다.
+
+```bash
+claude --disallowedTools "Bash" "PowerShell" "Edit" "Write" "NotebookEdit"
+```
 
 TradingView MCP는 공개 베타라 도구 목록과 동작이 바뀔 수 있습니다. 이 폴더의 결과는 2026-11-14 실측 기준입니다.
