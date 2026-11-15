@@ -30,7 +30,9 @@ def load_dotenv(path: Path) -> None:
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+            os.environ.setdefault(
+                key.strip(), value.strip().strip('"').strip("'")
+            )
 
 
 def extract_pine(text: str) -> str:
@@ -41,15 +43,20 @@ def extract_pine(text: str) -> str:
 
 def main() -> None:
     if len(sys.argv) != 3:
-        sys.exit("사용법: python ai_pine_request.py <프롬프트 파일> <저장할 .pine 파일>")
+        sys.exit(
+            "사용법: python ai_pine_request.py "
+            "<프롬프트 파일> <저장할 .pine 파일>"
+        )
     load_dotenv(Path(".env"))
-    load_dotenv(Path(__file__).resolve().parent.parent / ".env")  # 예제 저장소 루트의 .env
+    # 예제 저장소 루트의 .env
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     model = os.environ.get("OPENAI_MODEL")
     if not model:
         sys.exit("OPENAI_MODEL 환경변수를 설정하세요.")
 
     prompt = Path(sys.argv[1]).read_text(encoding="utf-8")
-    client = OpenAI()  # OPENAI_API_KEY와 OPENAI_BASE_URL(선택)을 환경변수에서 읽는다
+    # OPENAI_API_KEY와 OPENAI_BASE_URL(선택)을 환경변수에서 읽는다
+    client = OpenAI()
     response = client.chat.completions.create(
         model=model,
         messages=[

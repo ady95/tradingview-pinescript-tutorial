@@ -12,7 +12,8 @@ if timeframe.in_seconds(tf) <= timeframe.in_seconds()
 // 1) 상위 시간대 EMA: 확정된 직전 상위 캔들의 값만 가져온다 (이유는 06-4)
 htfEma = request.security(syminfo.tickerid, tf, ta.ema(close, emaLen)[1], lookahead = barmerge.lookahead_on)
 
-// 2) gaps 옵션: gaps_on이면 상위 캔들 값이 새로 들어온 캔들에만 값이 있고 나머지는 na
+// 2) gaps 옵션: gaps_on이면 상위 캔들 값이
+// 새로 들어온 캔들에만 값이 있고 나머지는 na
 htfCloseGaps = request.security(syminfo.tickerid, tf, close[1], gaps = barmerge.gaps_on, lookahead = barmerge.lookahead_on)
 
 // 3) 다른 종목의 데이터: 비교 종목의 같은 주기 종가

@@ -14,9 +14,11 @@ upTrend = stDir < 0
 turnUp = upTrend and not upTrend[1]
 turnDown = not upTrend and upTrend[1]
 
-// Webhook으로 보낼 신호(JSON). 비밀값은 코드가 아니라 알림 메시지 칸에서 붙인다 (12-2)
+// Webhook으로 보낼 신호(JSON). 비밀값은 코드가
+// 아니라 알림 메시지 칸에서 붙인다 (12-2)
 signalJson(string action, int qty) =>
-    // 지연 시세 계정에서는 거래소가 "KRX_DLY"로 표시되므로 "_DLY"를 떼어 낸다 (07-4)
+    // 지연 시세 계정에서는 거래소가 "KRX_DLY"로
+    // 표시되므로 "_DLY"를 떼어 낸다 (07-4)
     string exchange = str.replace_all(syminfo.prefix, "_DLY", "")
     string id = STRATEGY_ID + "-" + action + "-" + syminfo.ticker + "-" + str.tostring(time)
     '{"strategy":"' + STRATEGY_ID + '","action":"' + action + '","ticker":"' + syminfo.ticker + '","exchange":"' + exchange + '","qty":' + str.tostring(qty) + ',"price":' + str.tostring(close) + ',"bar_time":' + str.tostring(time) + ',"signal_id":"' + id + '"}'

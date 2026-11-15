@@ -45,7 +45,8 @@ if strategy.position_size > 0
 slope = (trendEma - trendEma[regimeLen]) / trendEma[regimeLen] * 100
 regime = slope > slopeLimit ? 0 : slope < -slopeLimit ? 2 : 1
 
-// 구간별 성과: 전날 판단한 구간에 오늘의 자산 변화를 기록한다 (미래 정보를 쓰지 않도록)
+// 구간별 성과: 전날 판단한 구간에 오늘의 자산
+// 변화를 기록한다 (미래 정보를 쓰지 않도록)
 var array<float> stratGrowth = array.from(1.0, 1.0, 1.0)
 var array<float> holdGrowth = array.from(1.0, 1.0, 1.0)
 var array<int> regimeBars = array.from(0, 0, 0)

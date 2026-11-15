@@ -40,7 +40,8 @@ if strategy.position_size > 0
     if bar_index - entryBar >= 9
         strategy.close("Long", comment="시간 청산")
 
-// [검토 수정] 수익률을 수수료가 반영된 profit_percent()로 계산해 승률 기준(profit)과 맞춘다
+// [검토 수정] 수익률을 수수료가 반영된
+// profit_percent()로 계산해 승률 기준(profit)과 맞춘다
 var table statsTable = table.new(position.top_right, 2, 3, border_width=1)
 
 if barstate.islast

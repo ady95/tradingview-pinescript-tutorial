@@ -1,4 +1,7 @@
-"""키움증권 REST API 모의투자 클라이언트 (12장). 주문·조회에 필요한 최소 기능만 담았다."""
+"""키움증권 REST API 모의투자 클라이언트 (12장).
+
+주문·조회에 필요한 최소 기능만 담았다.
+"""
 import time
 from urllib.parse import urlsplit
 
@@ -13,10 +16,15 @@ class KiwoomError(Exception):
 
 class KiwoomClient:
     def __init__(self, base_url: str, app_key: str, app_secret: str) -> None:
-        # 주소 문자열에 mockapi가 들어 있는지가 아니라, 호스트가 정확히 모의투자 도메인인지 확인한다
+        # 주소 문자열에 mockapi가 들어 있는지가 아니라,
+        # 호스트가 정확히 모의투자 도메인인지 확인한다
         url = urlsplit(base_url)
-        if url.scheme != "https" or url.hostname != MOCK_HOST or url.username or url.port not in (None, 443):
-            raise ValueError(f"이 예제는 모의투자 도메인(https://{MOCK_HOST})에서만 동작합니다.")
+        if (url.scheme != "https" or url.hostname != MOCK_HOST
+                or url.username or url.port not in (None, 443)):
+            raise ValueError(
+                "이 예제는 모의투자 도메인"
+                f"(https://{MOCK_HOST})에서만 동작합니다."
+            )
         self.base_url = base_url.rstrip("/")
         self.app_key = app_key
         self.app_secret = app_secret
@@ -41,7 +49,9 @@ class KiwoomClient:
         if api_id:
             headers["api-id"] = api_id
             headers["authorization"] = f"Bearer {self._get_token()}"
-        response = self._http.post(self.base_url + path, json=body, headers=headers)
+        response = self._http.post(
+            self.base_url + path, json=body, headers=headers
+        )
         response.raise_for_status()
         data = response.json()
         if str(data.get("return_code")) != "0":
@@ -51,15 +61,25 @@ class KiwoomClient:
     def deposit(self) -> dict:
         """예수금·주문가능금액 조회 (kt00001)."""
         data = self._post("/api/dostk/acnt", {"qry_tp": "3"}, "kt00001")
-        return {"cash": int(data["entr"]), "orderable": int(data["ord_alow_amt"])}
+        return {
+            "cash": int(data["entr"]),
+            "orderable": int(data["ord_alow_amt"]),
+        }
 
     def account_value(self) -> int:
         """추정 예탁자산 (kt00018). 일일 손실 한도 계산에 쓴다."""
-        data = self._post("/api/dostk/acnt", {"qry_tp": "1", "dmst_stex_tp": "KRX"}, "kt00018")
+        data = self._post(
+            "/api/dostk/acnt",
+            {"qry_tp": "1", "dmst_stex_tp": "KRX"},
+            "kt00018",
+        )
         return int(data["prsm_dpst_aset_amt"])
 
     def order(self, side: str, ticker: str, qty: int, price: int = 0) -> str:
-        """매수(kt10000)·매도(kt10001) 주문. price=0이면 시장가, 아니면 지정가. 주문번호를 돌려준다."""
+        """매수(kt10000)·매도(kt10001) 주문. 주문번호를 돌려준다.
+
+        price=0이면 시장가, 아니면 지정가.
+        """
         api_id = "kt10000" if side == "buy" else "kt10001"
         body = {
             "dmst_stex_tp": "KRX",
@@ -73,5 +93,6 @@ class KiwoomClient:
 
     def cancel(self, ticker: str, order_no: str) -> str:
         """미체결 주문 전량 취소 (kt10003)."""
-        body = {"dmst_stex_tp": "KRX", "orig_ord_no": order_no, "stk_cd": ticker, "cncl_qty": "0"}
+        body = {"dmst_stex_tp": "KRX", "orig_ord_no": order_no,
+                "stk_cd": ticker, "cncl_qty": "0"}
         return self._post("/api/dostk/ordr", body, "kt10003")["ord_no"]

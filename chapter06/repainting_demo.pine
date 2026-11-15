@@ -6,7 +6,8 @@ showLeakBg = input.bool(true, "누수로 알아낸 양봉일 배경 표시")
 // 1) 잘못된 예 — 미래 데이터 누수: 과거 캔들에서 그날의 최종 종가를 미리 본다
 dailyLeak = request.security(syminfo.tickerid, "D", close, lookahead = barmerge.lookahead_on)
 
-// 2) 리페인팅 예: 실시간에서는 장중 값이 계속 바뀌어, 과거 차트와 모습이 달라진다
+// 2) 리페인팅 예: 실시간에서는 장중 값이
+// 계속 바뀌어, 과거 차트와 모습이 달라진다
 dailyRepaint = request.security(syminfo.tickerid, "D", close)
 
 // 3) 안전한 예: 이미 확정된 전일 종가만 쓴다
@@ -19,7 +20,8 @@ plot(dailyLeak, "1) 누수", color = color.red, style = plot.style_stepline)
 plot(dailyRepaint, "2) 리페인팅", color = color.orange, style = plot.style_stepline)
 plot(dailySafe, "3) 안전", color = color.blue, linewidth = 2, style = plot.style_stepline)
 
-// 누수된 값으로는 "오늘이 양봉으로 끝날지"를 장 시작부터 알 수 있다 — 현실에서는 불가능
+// 누수된 값으로는 "오늘이 양봉으로 끝날지"를
+// 장 시작부터 알 수 있다 — 현실에서는 불가능
 leakBullDay = dailyLeak > dailyOpen
 bgcolor(showLeakBg and leakBullDay ? color.new(color.red, 90) : na, title = "누수로 알아낸 양봉일")
 

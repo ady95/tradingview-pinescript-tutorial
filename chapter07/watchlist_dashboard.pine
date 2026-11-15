@@ -10,7 +10,8 @@ s5 = input.symbol("KRX:051910", "종목 5", group = GRP_S)
 s6 = input.symbol("KRX:068270", "종목 6", group = GRP_S)
 volMult = input.float(2.0, "거래량 급증 배수", minval = 1, step = 0.5)
 
-// 한 종목의 상태를 계산하는 함수 — request.security() 안에서 그 종목 기준으로 실행된다
+// 한 종목의 상태를 계산하는 함수 —
+// request.security() 안에서 그 종목 기준으로 실행된다
 status() =>
     chg = (close - close[1]) / close[1] * 100
     rsi = ta.rsi(close, 14)

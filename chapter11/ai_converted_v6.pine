@@ -7,7 +7,8 @@ strategy("v5 예제 — 거래량 돌파", overlay = true, initial_capital = 100
 // 그 밖의 체결·계산 관련 설정은 이 전략에서 v5와 동일한 기본값을 유지합니다.
 len = input.int(15, "기간", minval = 2)
 // len은 입력 정수이므로 v5와 v6 모두 정수 나눗셈을 합니다.
-// 상수 정수끼리의 나눗셈 결과가 v6에서 달라지는 문제는 여기에 해당하지 않습니다.
+// 상수 정수끼리의 나눗셈 결과가 v6에서
+// 달라지는 문제는 여기에 해당하지 않습니다.
 half = len / 2
 ma = ta.sma(close, half)
 volAvg = ta.sma(volume, 20)

@@ -12,7 +12,9 @@ def load_dotenv(path: Path) -> None:
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+            os.environ.setdefault(
+                key.strip(), value.strip().strip('"').strip("'")
+            )
 
 
 @dataclass(frozen=True)
@@ -34,16 +36,24 @@ def load_settings() -> Settings:
     secret = os.environ.get("WEBHOOK_SECRET", "")
     # isalnum()만 쓰면 한글도 통과하므로 ASCII 검사를 함께 한다
     if len(secret) < 16 or not (secret.isascii() and secret.isalnum()):
-        raise RuntimeError("WEBHOOK_SECRET을 16자 이상의 영문·숫자로 설정하세요.")
+        raise RuntimeError(
+            "WEBHOOK_SECRET을 16자 이상의 영문·숫자로 설정하세요."
+        )
     tickers = os.environ.get("ALLOWED_TICKERS", "005930,000660")
     return Settings(
         webhook_secret=secret,
-        kiwoom_base_url=os.environ.get("KIWOOM_BASE_URL", "https://mockapi.kiwoom.com"),
+        kiwoom_base_url=os.environ.get(
+            "KIWOOM_BASE_URL", "https://mockapi.kiwoom.com"
+        ),
         app_key=os.environ.get("KIWOOM_PAPER_APP_KEY", ""),
         app_secret=os.environ.get("KIWOOM_PAPER_APP_SECRET", ""),
         max_order_amount=int(os.environ.get("MAX_ORDER_AMOUNT_KRW", "1000000")),
         max_daily_loss=int(os.environ.get("MAX_DAILY_LOSS_KRW", "300000")),
-        allowed_tickers=frozenset(t.strip() for t in tickers.split(",") if t.strip()),
-        max_signal_age_hours=float(os.environ.get("MAX_SIGNAL_AGE_HOURS", "24")),
+        allowed_tickers=frozenset(
+            t.strip() for t in tickers.split(",") if t.strip()
+        ),
+        max_signal_age_hours=float(
+            os.environ.get("MAX_SIGNAL_AGE_HOURS", "24")
+        ),
         dry_run=os.environ.get("DRY_RUN", "true").lower() != "false",
     )
